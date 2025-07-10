@@ -13,5 +13,20 @@ services:
       - db_data:/var/lib/postgresql/data
       - ./01-schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
       - ./02-populate.sql:/docker-entrypoint-initdb.d/02-populate.sql
+  backend:
+    build: ./backend
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - SECRET_KEY=${SECRET_KEY}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - ./backend/app:/app/app
+      - ./backend/requirements.txt:/app/requirements.txt
+      - ./backend/main.py:/app/main.py
+      - ./backend/.env:/app/.env
 volumes:
   db_data:
