@@ -35,4 +35,4 @@ app.include_router(task_estudante_router.router)
 
 @app.get("/")
 def root():
-    return {"message": "Voluntariamente API is running"} 
+    return {"message": "Voluntariamente API is running"}
