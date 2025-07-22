@@ -4,7 +4,8 @@ from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.exc import IntegrityError
 from typing import List
-from .. import models, schemas, auth, database
+from .. import models, schemas, database
+from . import auth
 
 router = APIRouter(prefix="/task-estudantes", tags=["task-estudantes"])
 

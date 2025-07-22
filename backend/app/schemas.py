@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr, ConfigDict
 from typing import Optional
+from datetime import datetime
 
 class UserBase(BaseModel):
     username: str
@@ -151,7 +152,7 @@ class TaskUpdate(BaseModel):
 class MatriculaProjetosBase(BaseModel):
     student_id: int
     projeto_id: int
-    matricula_date: Optional[str] = None
+    matricula_date: Optional[datetime] = None
     status: Optional[str] = None
 
 class MatriculaProjetosCreate(MatriculaProjetosBase):
@@ -162,7 +163,7 @@ class MatriculaProjetosRead(MatriculaProjetosBase):
     matricula_id: int
 
 class MatriculaProjetosUpdate(BaseModel):
-    matricula_date: Optional[str] = None
+    matricula_date: Optional[datetime] = None
     status: Optional[str] = None 
 
 class TaskEstudanteBase(BaseModel):

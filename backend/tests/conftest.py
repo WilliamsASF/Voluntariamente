@@ -1,18 +1,20 @@
 import pytest
+import pytest_asyncio
 import asyncio
 import os
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
-from app.database import get_db, Base
-from app.auth import get_current_user
+from app.database import get_db
+from app.models import Base
+from app.routers.auth import get_current_user
 from app import models
 from main import app
 
 # Test DB URL
 TEST_DATABASE_URL = "sqlite+aiosqlite:///./test.db"
 
-# Engine e Session
+# Engine and Session for testing
 test_engine = create_async_engine(
     TEST_DATABASE_URL, connect_args={"check_same_thread": False}
 )
@@ -44,31 +46,32 @@ def event_loop():
     yield loop
     loop.close()
 
-@pytest.fixture(scope="session")
+@pytest_asyncio.fixture(scope="function")
 async def setup_database():
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
-    if os.path.exists("./test.db"):
-        os.remove("./test.db")
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def client(setup_database):
+    """AsyncClient for async testing"""
     async with AsyncClient(app=app, base_url="http://test") as ac:
         yield ac
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def db_session():
     async with TestingSessionLocal() as session:
         yield session
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def sample_user(db_session):
+    import uuid
+    unique_id = str(uuid.uuid4())[:8]
     user = models.User(
-        username="testuser",
-        email="test@example.com",
+        username=f"testuser_{unique_id}",
+        email=f"test_{unique_id}@example.com",
         password="hashedpassword",
         role="Admin"
     )
@@ -77,7 +80,7 @@ async def sample_user(db_session):
     await db_session.refresh(user)
     return user
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def sample_professor(db_session, sample_user):
     professor = models.Professor(
         user_id=sample_user.user_id,
@@ -90,11 +93,13 @@ async def sample_professor(db_session, sample_user):
     await db_session.refresh(professor)
     return professor
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def sample_estudante(db_session):
+    import uuid
+    unique_id = str(uuid.uuid4())[:8]
     user = models.User(
-        username="teststudent",
-        email="student@example.com",
+        username=f"teststudent_{unique_id}",
+        email=f"student_{unique_id}@example.com",
         password="hashedpassword",
         role="Estudante"
     )
@@ -113,7 +118,7 @@ async def sample_estudante(db_session):
     await db_session.refresh(estudante)
     return estudante
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def sample_ong(db_session):
     ong = models.ONG(
         ngo_name="Test NGO",
@@ -126,7 +131,7 @@ async def sample_ong(db_session):
     await db_session.refresh(ong)
     return ong
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def sample_disciplina(db_session, sample_professor):
     disciplina = models.Disciplina(
         professor_id=sample_professor.professor_id,
@@ -138,7 +143,7 @@ async def sample_disciplina(db_session, sample_professor):
     await db_session.refresh(disciplina)
     return disciplina
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def sample_projeto(db_session, sample_disciplina, sample_ong):
     projeto = models.Projeto(
         disciplina_id=sample_disciplina.disciplina_id,
@@ -152,7 +157,7 @@ async def sample_projeto(db_session, sample_disciplina, sample_ong):
     await db_session.refresh(projeto)
     return projeto
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def sample_task(db_session, sample_projeto):
     task = models.Task(
         projeto_id=sample_projeto.projeto_id,

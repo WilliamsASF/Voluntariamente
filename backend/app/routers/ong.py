@@ -1,16 +1,21 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from app import models, schemas
 from app.database import get_db
+from . import auth
 
 router = APIRouter(
     prefix="/ongs",
     tags=["ongs"],
 )
 
-@router.post("/", response_model=schemas.ONGRead)
-async def create_ong(ong: schemas.ONGCreate, db: AsyncSession = Depends(get_db)):
+@router.post("/", response_model=schemas.ONGRead, status_code=status.HTTP_201_CREATED)
+async def create_ong(
+    ong: schemas.ONGCreate, 
+    db: AsyncSession = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
     db_ong = models.ONG(**ong.model_dump())
     db.add(db_ong)
     await db.commit()
@@ -32,7 +37,12 @@ async def read_ong(ong_id: int, db: AsyncSession = Depends(get_db)):
     return db_ong
 
 @router.put("/{ong_id}", response_model=schemas.ONGRead)
-async def update_ong(ong_id: int, ong: schemas.ONGUpdate, db: AsyncSession = Depends(get_db)):
+async def update_ong(
+    ong_id: int, 
+    ong: schemas.ONGUpdate, 
+    db: AsyncSession = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
     result = await db.execute(select(models.ONG).filter(models.ONG.ngo_id == ong_id))
     db_ong = result.scalars().first()
     if db_ong is None:
@@ -44,15 +54,17 @@ async def update_ong(ong_id: int, ong: schemas.ONGUpdate, db: AsyncSession = Dep
     await db.refresh(db_ong)
     return db_ong
 
-@router.delete("/{ong_id}", response_model=schemas.ONGRead)
-async def delete_ong(ong_id: int, db: AsyncSession = Depends(get_db)):
+@router.delete("/{ong_id}")
+async def delete_ong(
+    ong_id: int, 
+    db: AsyncSession = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
     result = await db.execute(select(models.ONG).filter(models.ONG.ngo_id == ong_id))
     db_ong = result.scalars().first()
     if db_ong is None:
         raise HTTPException(status_code=404, detail="ONG not found")
     
-    ong_data = schemas.ONGRead.model_validate(db_ong)
-    
     await db.delete(db_ong)
     await db.commit()
-    return ong_data
+    return {"message": "ONG deleted successfully"}
