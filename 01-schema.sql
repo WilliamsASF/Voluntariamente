@@ -34,12 +34,13 @@ CREATE TABLE Estudante (
 -- Tabela ONG
 CREATE TABLE ONG (
     ngo_id SERIAL PRIMARY KEY,
-    ngo_name VARCHAR(255) NOT NULL, [cite: 1]
-    description TEXT, [cite: 1]
-    email VARCHAR(255), [cite: 1]
-    phone VARCHAR(50), [cite: 1]
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, [cite: 1]
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP [cite: 1]
+    ngo_name VARCHAR(255) NOT NULL,
+    description TEXT,
+    email VARCHAR(255),
+    phone VARCHAR(50),
+    area_atuacao VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Tabela Disciplina
