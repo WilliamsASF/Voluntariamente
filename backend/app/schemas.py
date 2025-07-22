@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ConfigDict
 from typing import Optional
 
 class UserBase(BaseModel):
@@ -10,15 +10,13 @@ class UserCreate(UserBase):
     password: str
 
 class UserRead(UserBase):
+    model_config = ConfigDict(from_attributes=True)
     user_id: int
-    class Config:
-        orm_mode = True
 
 class UserInDB(UserBase):
+    model_config = ConfigDict(from_attributes=True)
     user_id: int
     password: str
-    class Config:
-        orm_mode = True
 
 class UserUpdate(BaseModel):
     username: Optional[str] = None
@@ -36,162 +34,154 @@ class TokenData(BaseModel):
 class ProfessorBase(BaseModel):
     user_id: int
     full_name: str
-    vinculo: str = None
-    departamento: str = None
+    vinculo: Optional[str] = None
+    departamento: Optional[str] = None
 
 class ProfessorCreate(ProfessorBase):
     pass
 
 class ProfessorRead(ProfessorBase):
+    model_config = ConfigDict(from_attributes=True)
     professor_id: int
-    class Config:
-        orm_mode = True
 
 class ProfessorUpdate(BaseModel):
-    full_name: str = None
-    vinculo: str = None
-    departamento: str = None 
+    full_name: Optional[str] = None
+    vinculo: Optional[str] = None
+    departamento: Optional[str] = None 
 
 class EstudanteBase(BaseModel):
     user_id: int
     full_name: str
-    vinculo: str = None
-    curso: str = None
+    vinculo: Optional[str] = None
+    curso: Optional[str] = None
 
 class EstudanteCreate(EstudanteBase):
     pass
 
 class EstudanteRead(EstudanteBase):
+    model_config = ConfigDict(from_attributes=True)
     student_id: int
-    class Config:
-        orm_mode = True
 
 class EstudanteUpdate(BaseModel):
-    full_name: str = None
-    vinculo: str = None
-    curso: str = None 
+    full_name: Optional[str] = None
+    vinculo: Optional[str] = None
+    curso: Optional[str] = None 
 
 class ONGBase(BaseModel):
     ngo_name: str
-    description: str = None
-    email: str = None
-    phone: str = None
+    description: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
 
 class ONGCreate(ONGBase):
     pass
 
 class ONGRead(ONGBase):
+    model_config = ConfigDict(from_attributes=True)
     ngo_id: int
-    class Config:
-        orm_mode = True
 
 class ONGUpdate(BaseModel):
-    ngo_name: str = None
-    description: str = None
-    email: str = None
-    phone: str = None 
+    ngo_name: Optional[str] = None
+    description: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None 
 
 class DisciplinaBase(BaseModel):
-    professor_id: int = None
+    professor_id: Optional[int] = None
     nome_disciplina: str
-    description: str = None
+    description: Optional[str] = None
 
 class DisciplinaCreate(DisciplinaBase):
     pass
 
 class DisciplinaRead(DisciplinaBase):
+    model_config = ConfigDict(from_attributes=True)
     disciplina_id: int
-    class Config:
-        orm_mode = True
 
 class DisciplinaUpdate(BaseModel):
-    professor_id: int = None
-    nome_disciplina: str = None
-    description: str = None 
+    professor_id: Optional[int] = None
+    nome_disciplina: Optional[str] = None
+    description: Optional[str] = None 
 
 class ProjetoBase(BaseModel):
-    disciplina_id: int = None
-    ngo_id: int = None
+    disciplina_id: Optional[int] = None
+    ngo_id: Optional[int] = None
     name: str
-    description: str = None
-    start_date: str = None
-    end_date: str = None
-    status: str = None
+    description: Optional[str] = None
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+    status: Optional[str] = None
 
 class ProjetoCreate(ProjetoBase):
     pass
 
 class ProjetoRead(ProjetoBase):
+    model_config = ConfigDict(from_attributes=True)
     projeto_id: int
-    class Config:
-        orm_mode = True
 
 class ProjetoUpdate(BaseModel):
-    disciplina_id: int = None
-    ngo_id: int = None
-    name: str = None
-    description: str = None
-    start_date: str = None
-    end_date: str = None
-    status: str = None 
+    disciplina_id: Optional[int] = None
+    ngo_id: Optional[int] = None
+    name: Optional[str] = None
+    description: Optional[str] = None
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+    status: Optional[str] = None 
 
 class TaskBase(BaseModel):
     projeto_id: int
     name: str
-    description: str = None
-    type: str = None
-    status: str = None
+    description: Optional[str] = None
+    type: Optional[str] = None
+    status: Optional[str] = None
 
 class TaskCreate(TaskBase):
     pass
 
 class TaskRead(TaskBase):
+    model_config = ConfigDict(from_attributes=True)
     task_id: int
-    class Config:
-        orm_mode = True
 
 class TaskUpdate(BaseModel):
-    name: str = None
-    description: str = None
-    type: str = None
-    status: str = None 
+    name: Optional[str] = None
+    description: Optional[str] = None
+    type: Optional[str] = None
+    status: Optional[str] = None 
 
 class MatriculaProjetosBase(BaseModel):
     student_id: int
     projeto_id: int
-    matricula_date: str = None
-    status: str = None
+    matricula_date: Optional[str] = None
+    status: Optional[str] = None
 
 class MatriculaProjetosCreate(MatriculaProjetosBase):
     pass
 
 class MatriculaProjetosRead(MatriculaProjetosBase):
+    model_config = ConfigDict(from_attributes=True)
     matricula_id: int
-    class Config:
-        orm_mode = True
 
 class MatriculaProjetosUpdate(BaseModel):
-    matricula_date: str = None
-    status: str = None 
+    matricula_date: Optional[str] = None
+    status: Optional[str] = None 
 
 class TaskEstudanteBase(BaseModel):
     student_id: int
     task_id: int
-    assigned_date: str = None
-    deadline_date: str = None
-    status: str = None
-    description: str = None
+    assigned_date: Optional[str] = None
+    deadline_date: Optional[str] = None
+    status: Optional[str] = None
+    description: Optional[str] = None
 
 class TaskEstudanteCreate(TaskEstudanteBase):
     pass
 
 class TaskEstudanteRead(TaskEstudanteBase):
+    model_config = ConfigDict(from_attributes=True)
     estud_task_id: int
-    class Config:
-        orm_mode = True
 
 class TaskEstudanteUpdate(BaseModel):
-    assigned_date: str = None
-    deadline_date: str = None
-    status: str = None
-    description: str = None 
+    assigned_date: Optional[str] = None
+    deadline_date: Optional[str] = None
+    status: Optional[str] = None
+    description: Optional[str] = None 

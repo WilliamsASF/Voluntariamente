@@ -1,29 +1,31 @@
 import pytest
 import asyncio
+import os
 from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from app.database import get_db, Base
 from app.auth import get_current_user
 from app import models
 from main import app
-import os
 
-# Test database URL
+# Test DB URL
 TEST_DATABASE_URL = "sqlite+aiosqlite:///./test.db"
 
-# Create test engine
+# Engine e Session
 test_engine = create_async_engine(
     TEST_DATABASE_URL, connect_args={"check_same_thread": False}
 )
 TestingSessionLocal = sessionmaker(
-    test_engine, class_=AsyncSession, expire_on_commit=False
+    bind=test_engine, class_=AsyncSession, expire_on_commit=False
 )
 
+# Override get_db
 async def override_get_db():
     async with TestingSessionLocal() as session:
         yield session
 
+# Override usuário autenticado
 def override_get_current_user():
     return models.User(
         user_id=1,
@@ -35,6 +37,7 @@ def override_get_current_user():
 app.dependency_overrides[get_db] = override_get_db
 app.dependency_overrides[get_current_user] = override_get_current_user
 
+# Fixtures
 @pytest.fixture(scope="session")
 def event_loop():
     loop = asyncio.get_event_loop_policy().new_event_loop()
