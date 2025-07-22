@@ -8,7 +8,7 @@ from . import auth
 
 router = APIRouter(prefix="/disciplinas", tags=["disciplinas"])
 
-@router.post("/", response_model=schemas.DisciplinaRead)
+@router.post("/", response_model=schemas.DisciplinaRead, status_code=status.HTTP_201_CREATED)
 async def create_disciplina(
     disciplina: schemas.DisciplinaCreate,
     db: AsyncSession = Depends(database.get_db),
@@ -19,7 +19,7 @@ async def create_disciplina(
         if not result.scalars().first():
             raise HTTPException(status_code=404, detail="Professor not found")
     
-    db_disciplina = models.Disciplina(**disciplina.dict())
+    db_disciplina = models.Disciplina(**disciplina.model_dump())
     db.add(db_disciplina)
     await db.commit()
     await db.refresh(db_disciplina)
@@ -69,7 +69,7 @@ async def update_disciplina(
     if db_disciplina is None:
         raise HTTPException(status_code=404, detail="Disciplina not found")
     
-    update_data = disciplina_update.dict(exclude_unset=True)
+    update_data = disciplina_update.model_dump(exclude_unset=True)
     if 'professor_id' in update_data and update_data['professor_id']:
         result = await db.execute(select(models.Professor).where(models.Professor.professor_id == update_data['professor_id']))
         if not result.scalars().first():

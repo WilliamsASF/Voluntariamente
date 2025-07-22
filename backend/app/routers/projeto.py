@@ -15,7 +15,7 @@ async def create_projeto(
     current_user: models.User = Depends(auth.get_current_user)
 ):
    
-    db_projeto = models.Projeto(**projeto.dict())
+    db_projeto = models.Projeto(**projeto.model_dump())
     db.add(db_projeto)
     await db.commit()
     await db.refresh(db_projeto)
@@ -72,7 +72,7 @@ async def update_projeto(
     if db_projeto is None:
         raise HTTPException(status_code=404, detail="Projeto not found")
     
-    update_data = projeto_update.dict(exclude_unset=True)
+    update_data = projeto_update.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(db_projeto, field, value)
     

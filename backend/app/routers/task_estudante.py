@@ -24,7 +24,7 @@ async def create_task_estudante(
         raise HTTPException(status_code=404, detail="Task not found")
     
     try:
-        db_task_estudante = models.TaskEstudante(**task_estudante.dict())
+        db_task_estudante = models.TaskEstudante(**task_estudante.model_dump())
         db.add(db_task_estudante)
         await db.commit()
         await db.refresh(db_task_estudante)
@@ -83,7 +83,7 @@ async def update_task_estudante(
     if db_task_estudante is None:
         raise HTTPException(status_code=404, detail="Task assignment not found")
     
-    update_data = task_estudante_update.dict(exclude_unset=True)
+    update_data = task_estudante_update.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(db_task_estudante, field, value)
     

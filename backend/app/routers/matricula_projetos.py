@@ -24,7 +24,7 @@ async def create_matricula(
         raise HTTPException(status_code=404, detail="Project not found")
     
     try:
-        db_matricula = models.MatriculaProjetos(**matricula.dict())
+        db_matricula = models.MatriculaProjetos(**matricula.model_dump())
         db.add(db_matricula)
         await db.commit()
         await db.refresh(db_matricula)
@@ -83,7 +83,7 @@ async def update_matricula(
     if db_matricula is None:
         raise HTTPException(status_code=404, detail="Matricula not found")
     
-    update_data = matricula_update.dict(exclude_unset=True)
+    update_data = matricula_update.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(db_matricula, field, value)
     

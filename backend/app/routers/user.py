@@ -118,7 +118,7 @@ async def update_user(
             detail="Not authorized to update this user"
         )
     
-    update_data = user_update.dict(exclude_unset=True)
+    update_data = user_update.model_dump(exclude_unset=True)
 
     if 'username' in update_data or 'email' in update_data:
         existing = await _check_unique_user(

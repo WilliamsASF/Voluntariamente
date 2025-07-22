@@ -18,7 +18,7 @@ async def create_task(
     if not result.scalars().first():
         raise HTTPException(status_code=404, detail="Project not found")
     
-    db_task = models.Task(**task.dict())
+    db_task = models.Task(**task.model_dump())
     db.add(db_task)
     await db.commit()
     await db.refresh(db_task)
@@ -68,7 +68,7 @@ async def update_task(
     if db_task is None:
         raise HTTPException(status_code=404, detail="Task not found")
     
-    update_data = task_update.dict(exclude_unset=True)
+    update_data = task_update.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(db_task, field, value)
     
