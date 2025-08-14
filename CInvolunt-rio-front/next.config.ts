@@ -1,8 +1,10 @@
 import type { Configuration } from 'webpack';
-import path from 'path'; // Adicione este import
+import path from 'path';
 
 const nextConfig = {
-  // outras configurações...
+  env: {
+    PORT: '3000',
+  },
 };
 
 module.exports = {
@@ -11,7 +13,7 @@ module.exports = {
     config.resolve = config.resolve || {};
     config.resolve.alias = {
       ...config.resolve.alias,
-      '@lib': path.resolve(__dirname, 'lib'), // Use 'path' aqui
+      '@lib': path.resolve(__dirname, 'lib'),
     };
 
     return config;

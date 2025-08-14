@@ -13,6 +13,12 @@ from app.routers import task_estudante as task_estudante_router
 
 app = FastAPI()
 
+origins = [
+    "http://localhost",
+    "http://localhost:8080",
+]
+
+
 # CORS settings (adjust origins as needed)
 app.add_middleware(
     CORSMiddleware,

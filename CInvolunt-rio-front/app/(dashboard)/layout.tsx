@@ -13,15 +13,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="flex justify-center mb-6">
             <Image src="/logo.svg" alt="CInVoluntário" width={160} height={160} className="object-contain" />
           </div>
-          <button className="flex items-center gap-2 bg-white text-red-600 font-semibold px-3 py-2 rounded-md w-full mb-4">
+          <Link href="/nova-turma" className="flex items-center gap-2 bg-white text-red-600 font-semibold px-3 py-2 rounded-md w-full mb-4 hover:bg-gray-100 transition-colors">
             <Plus size={18} />
             Nova turma
-          </button>
+          </Link>
           <nav className="space-y-3">
             <SidebarItem icon={<Home size={18} />} label="Página Inicial" href="/pagina_inicial" />
             <SidebarItem icon={<Users size={18} />} label="Alunos" href="/alunos" />
             <SidebarItem icon={<Layers size={18} />} label="Grupos" href="/grupos" />
-            <SidebarItem icon={<Building size={18} />} label="Ongs" href="/ongs" />
+            <SidebarItem icon={<Building size={18} />} label="Projeto" href="/projeto" />
             <SidebarItem icon={<Settings size={18} />} label="Configurações" href="/configuracoes" />
           </nav>
         </div>
