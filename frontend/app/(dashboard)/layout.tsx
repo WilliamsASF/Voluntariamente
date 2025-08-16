@@ -28,8 +28,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="flex items-center gap-2">
           <div className="w-10 h-10 rounded-full bg-white" />
           <div>
-            <p className="text-sm font-semibold">Nome Professor</p>
-            <p className="text-xs text-white/80">email@exemplo.com</p>
+            <p className="text-sm font-semibold">Professor</p>
+            <p className="text-xs text-white/80">Sistema de Gestão</p>
           </div>
         </div>
       </aside>

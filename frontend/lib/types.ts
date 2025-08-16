@@ -84,24 +84,24 @@ export interface DisciplinaCreate {
 }
 
 export interface Projeto {
-  project_id: number;
-  disciplina_id: number;
-  ngo_id: number;
-  project_name: string;
+  projeto_id: number;
+  disciplina_id?: number;
+  ngo_id?: number;
+  name: string;
   description?: string;
   start_date?: string;
   end_date?: string;
-  status: string;
+  status?: string;
 }
 
 export interface ProjetoCreate {
-  disciplina_id: number;
-  ngo_id: number;
-  project_name: string;
+  disciplina_id?: number;
+  ngo_id?: number;
+  name: string;
   description?: string;
   start_date?: string;
   end_date?: string;
-  status: string;
+  status?: string;
 }
 
 export interface Task {
@@ -124,18 +124,18 @@ export interface TaskCreate {
 }
 
 export interface MatriculaProjeto {
-  enrollment_id: number;
+  matricula_id: number;
   student_id: number;
-  project_id: number;
-  enrollment_date: string;
-  status: string;
+  projeto_id: number;
+  matricula_date?: string;
+  status?: string;
 }
 
 export interface MatriculaProjetoCreate {
   student_id: number;
-  project_id: number;
-  enrollment_date: string;
-  status: string;
+  projeto_id: number;
+  matricula_date?: string;
+  status?: string;
 }
 
 export interface TaskEstudante {

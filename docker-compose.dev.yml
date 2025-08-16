@@ -1,9 +1,8 @@
 version: '3.8'
-
 services:
-  # Banco de dados PostgreSQL
   postgres:
-    image: postgres:15
+    image: postgres:17
+    restart: always
     container_name: voluntariamente_postgres
     environment:
       POSTGRES_DB: voluntariamente
@@ -12,50 +11,53 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./01-schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
-      - ./02-populate.sql:/docker-entrypoint-initdb.d/02-populate.sql
+      - pgdata:/var/lib/postgresql/data
+      - ./01-schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./02-populate.sql:/docker-entrypoint-initdb.d/02-populate.sql:ro
     networks:
       - voluntariamente_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  # Backend FastAPI
   backend:
     build: ./backend
     container_name: voluntariamente_backend
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/voluntariamente
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/voluntariamente
       - SECRET_KEY=dev-secret-key-change-in-production
       - DEBUG=true
+      - CORS_ORIGINS=http://localhost:3000
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     volumes:
       - ./backend:/app
     networks:
       - voluntariamente_network
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
-  # Frontend Next.js
+
   frontend:
-    build: ./CInvolunt-rio-front
+    build: ./frontend
     container_name: voluntariamente_frontend
     ports:
       - "3000:3000"
     environment:
       - NEXT_PUBLIC_API_URL=http://localhost:8000
     depends_on:
-      - backend
-    volumes:
-      - ./CInvolunt-rio-front:/app
-      - /app/node_modules
-      - /app/.next
+      backend:
+        condition: service_started
     networks:
       - voluntariamente_network
-    command: npm run dev -- --port 3000
+    command: npm run dev:simple
 
 volumes:
-  postgres_data:
+  pgdata:
 
 networks:
   voluntariamente_network:

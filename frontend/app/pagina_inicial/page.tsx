@@ -41,7 +41,7 @@ export default function PaginaInicial() {
           const alunosFormatados: AlunoSelecionado[] = estudantesResult.data.map(est => ({
             id: est.student_id,
             nome: est.full_name,
-            email: 'email@exemplo.com', // Campo não disponível no backend
+            email: `${est.full_name.toLowerCase().replace(/\s+/g, '.')}@estudante.ufpe.br`,
             selecionado: false
           }));
           setAlunos(alunosFormatados);

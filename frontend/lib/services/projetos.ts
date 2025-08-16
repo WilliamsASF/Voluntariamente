@@ -1,6 +1,27 @@
 import { apiClient } from '../api';
 import { Projeto, ProjetoCreate } from '../types';
 
+// Alinha com o backend: MatriculaProjetosRead
+export interface MatriculaProjeto {
+  matricula_id: number;
+  student_id: number;
+  projeto_id: number;
+  matricula_date?: string;
+  status?: string;
+}
+
+export class MatriculasService {
+  static async getByProjetoId(projetoId: number): Promise<{ success: boolean; data?: MatriculaProjeto[]; error?: string }> {
+    try {
+      const res = await apiClient.get<MatriculaProjeto[]>(`/matriculas/project/${projetoId}`);
+      if (res.error) throw new Error(res.error);
+      return { success: true, data: res.data };
+    } catch (e) {
+      return { success: false, error: e instanceof Error ? e.message : 'Erro ao obter matrículas do projeto' };
+    }
+  }
+}
+
 export class ProjetoService {
   // Obter todos os projetos
   static async getAllProjetos(): Promise<{ success: boolean; data?: Projeto[]; error?: string }> {

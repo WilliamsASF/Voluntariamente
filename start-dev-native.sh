@@ -17,11 +17,11 @@ fi
 
 # Verificar se PostgreSQL está rodando
 if ! pg_isready -h localhost -p 5432 &> /dev/null; then
-    echo "⚠️  PostgreSQL não está rodando na porta 5432"
+    echo "⚠️  PostgreSQL não está rodando na porta 5433"
     echo "   Por favor, inicie o PostgreSQL ou use Docker:"
     echo "   sudo systemctl start postgresql"
     echo "   ou"
-    echo "   docker run --name postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres:15"
+    echo "   docker run --name postgres -e POSTGRES_PASSWORD=postgres -p 5433:5432 -d postgres:17"
 fi
 
 echo "✅ Dependências básicas verificadas"
@@ -81,7 +81,7 @@ cd CInvolunt-rio-front
 # Verificar se node_modules existe
 if [ ! -d "node_modules" ]; then
     echo "📦 Instalando dependências Node.js..."
-    npm install
+    npm run install
 fi
 
 # Iniciar frontend em background

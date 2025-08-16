@@ -27,7 +27,7 @@ docker-compose -f docker-compose.dev.yml up --build -d
 
 # Aguardar serviços iniciarem
 echo "⏳ Aguardando serviços iniciarem..."
-sleep 15
+sleep 5
 
 # Verificar status dos serviços
 echo "🔍 Verificando status dos serviços..."
