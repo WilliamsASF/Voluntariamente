@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import Card, { CardHeader, CardContent } from '../../components/ui/card';
+import Card, { CardContent } from '../../components/ui/card';
 import Button from '../../components/ui/button';
 import Select from '../../components/ui/select';
 import Input from '../../components/ui/input';
@@ -43,7 +43,6 @@ export default function Cadastro() {
     setError('');
     setSuccess('');
 
-    // Validações
     if (!formData.username || !formData.email || !formData.password || !formData.confirmPassword) {
       setError('Por favor, preencha todos os campos');
       return;
@@ -82,7 +81,6 @@ export default function Cadastro() {
 
   return ( 
     <div className="flex items-center justify-center h-screen bg-red-600">
-      {/* Logo */}
       <div className="absolute top-8 left-1/2 transform -translate-x-1/2 z-10">
         <Image
           src="/logo.svg"
@@ -95,13 +93,11 @@ export default function Cadastro() {
 
       <Card className="w-full max-w-md p-6 bg-white rounded-lg shadow-md">
         <CardContent>
-          {/* Título */}
           <div className="text-center mb-6">
             <h1 className="text-2xl font-bold text-gray-800">Cadastro</h1>
             <p className="text-gray-600">Crie sua conta</p>
           </div>
 
-          {/* Mensagens */}
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
               {error}
@@ -115,77 +111,56 @@ export default function Cadastro() {
           )}
 
           <form className="space-y-4" onSubmit={onSubmit}>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Nome de usuário
-              </label>
-              <Input
-                name="username"
-                type="text"
-                placeholder="Digite seu nome de usuário"
-                value={formData.username}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
+            <Input
+              label="Nome de usuário"
+              name="username"
+              type="text"
+              placeholder="Digite seu nome de usuário"
+              value={formData.username}
+              onChange={handleInputChange}
+              required
+            />
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email
-              </label>
-              <Input
-                name="email"
-                type="email"
-                placeholder="Digite seu email"
-                value={formData.email}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
+            <Input
+              label="Email"
+              name="email"
+              type="email"
+              placeholder="Digite seu email"
+              value={formData.email}
+              onChange={handleInputChange}
+              required
+            />
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Função
-              </label>
-              <Select
-                placeholder="Selecione uma função"
-                options={[
-                  { value: 'Estudante', label: 'Estudante' },
-                  { value: 'Professor', label: 'Professor' },
-                  { value: 'Admin', label: 'Administrador' },
-                ]}
-                value={formData.role}
-                onChange={handleSelectChange}
-              />
-            </div>
+            <Select
+              placeholder="Selecione uma função"
+              options={[
+                { value: 'Estudante', label: 'Estudante' },
+                { value: 'Professor', label: 'Professor' },
+                { value: 'Admin', label: 'Administrador' },
+              ]}
+              value={formData.role}
+              onChange={handleSelectChange}
+            />
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Senha
-              </label>
-              <Input
-                name="password"
-                type="password"
-                placeholder="Digite sua senha"
-                value={formData.password}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
+            <Input
+              label="Senha"
+              name="password"
+              type="password"
+              placeholder="Digite sua senha"
+              value={formData.password}
+              onChange={handleInputChange}
+              required
+            />
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Confirmar Senha
-              </label>
-              <Input
-                name="confirmPassword"
-                type="password"
-                placeholder="Confirme sua senha"
-                value={formData.confirmPassword}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
+            <Input
+              label="Confirmar Senha"
+              name="confirmPassword"
+              type="password"
+              placeholder="Confirme sua senha"
+              value={formData.confirmPassword}
+              onChange={handleInputChange}
+              required
+            />
 
             <Button 
               type="submit" 
@@ -196,7 +171,6 @@ export default function Cadastro() {
               {isLoading ? 'Cadastrando...' : 'Finalizar Cadastro'}
             </Button>
 
-            {/* Link para login */}
             <p className="text-sm text-center text-gray-500">
               Já tem uma conta? <a href="/" className="text-red-600 underline">Faça login</a>
             </p>

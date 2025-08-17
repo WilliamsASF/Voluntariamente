@@ -1,36 +1,54 @@
-// components/ui/select.tsx
-import React, { useState } from 'react';
-import clsx from 'clsx';
+import React from "react";
 
-interface SelectProps {
-  label: string;
-  placeholder: string;
-  options: { value: string; label: string }[];
-}
+type Option = { value: string; label: string };
 
-const Select = ({ label, placeholder, options }: SelectProps) => {
-  const [selectedOption, setSelectedOption] = useState('');
+export type SelectProps = {
+  name?: string;
+  id?: string;
+  value: string; // ✅ agora existe
+  onChange: (value: string) => void; // ✅ controlado
+  options: Option[];
+  placeholder?: string;
+  required?: boolean;
+  disabled?: boolean;
+  className?: string;
+};
+
+export default function Select({
+  name,
+  id,
+  value,
+  onChange,
+  options,
+  placeholder,
+  required,
+  disabled,
+  className,
+}: SelectProps) {
+  const selectId = id || name;
 
   return (
-    <div>
-      <label htmlFor="function" className="block text-sm font-medium text-gray-700">
-        {label}
-      </label>
+    <div className="w-full">
       <select
-        id="function"
-        value={selectedOption}
-        onChange={(e) => setSelectedOption(e.target.value)}
-        className="mt-1 block w-full rounded-md border border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-red-500 focus:outline-none focus:ring-red-500 sm:text-sm"
+        id={selectId}
+        name={name}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        required={required}
+        disabled={disabled}
+        className={`w-full border border-gray-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-red-500 ${className || ""}`}
       >
-        <option value="" disabled>{placeholder}</option>
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
+        {placeholder && (
+          <option value="" disabled>
+            {placeholder}
+          </option>
+        )}
+        {options.map((opt) => (
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
           </option>
         ))}
       </select>
     </div>
   );
-};
-
-export default Select;
+}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Eye, Edit, Trash2, Calendar, Users, Building } from 'lucide-react';
+import { Plus, Eye, Trash2, Calendar, Building } from 'lucide-react';
 import { ProjetoService } from '../../lib/services/projetos';
 import { Projeto } from '../../lib/types';
 import Card, { CardHeader, CardContent } from '../../components/ui/card';
@@ -30,9 +30,9 @@ export default function ProjetosPage() {
     try {
       setIsLoading(true);
       setError('');
-      
+
       const result = await ProjetoService.getAllProjetos();
-      
+
       if (result.success && result.data) {
         setProjetos(result.data);
       } else {
@@ -53,7 +53,7 @@ export default function ProjetosPage() {
 
     try {
       const result = await ProjetoService.createProjeto(novoProjeto);
-      
+
       if (result.success && result.data) {
         setProjetos([...projetos, result.data]);
         setNovoProjeto({
@@ -77,7 +77,7 @@ export default function ProjetosPage() {
     if (confirm('Tem certeza que deseja excluir este projeto?')) {
       try {
         const result = await ProjetoService.deleteProjeto(projetoId);
-        
+
         if (result.success) {
           setProjetos(projetos.filter(p => p.projeto_id !== projetoId));
         } else {
@@ -108,13 +108,9 @@ export default function ProjetosPage() {
     }
   };
 
-  const formatDate = (dateString?: string) => {
+  const formatDate = (dateString: string) => {
     if (!dateString) return 'Não definida';
-    try {
-      return new Date(dateString).toLocaleDateString('pt-BR');
-    } catch {
-      return 'Data inválida';
-    }
+    return new Date(dateString).toLocaleDateString('pt-BR');
   };
 
   if (isLoading) {
@@ -149,8 +145,8 @@ export default function ProjetosPage() {
         )}
 
         {!showForm ? (
-          /* Lista de projetos */
           <>
+            {/* Lista de projetos */}
             <div className="flex justify-between items-center">
               <div className="text-sm text-gray-600">
                 Total: {projetos.length} projetos
@@ -158,6 +154,7 @@ export default function ProjetosPage() {
               <Button 
                 onClick={() => setShowForm(true)}
                 className="flex items-center gap-2"
+                variant="primary"
               >
                 <Plus size={18} />
                 Novo Projeto
@@ -192,17 +189,17 @@ export default function ProjetosPage() {
                       <div className="space-y-2 text-sm text-gray-600">
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4" />
-                          <span>Início: {formatDate(projeto.start_date)}</span>
+                          <span>Início: {formatDate(projeto.start_date ?? '')}</span>
                         </div>
                         
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4" />
-                          <span>Fim: {formatDate(projeto.end_date)}</span>
+                          <span>Fim: {formatDate(projeto.end_date ?? '')}</span>
                         </div>
                       </div>
                       
                       <div className="flex items-center justify-between">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(projeto.status)}`}>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(projeto.status ?? '')}`}>
                           {projeto.status || 'Status não definido'}
                         </span>
                         
@@ -323,6 +320,7 @@ export default function ProjetosPage() {
               <Button 
                 onClick={handleAddProjeto}
                 className="w-full"
+                variant="primary"
               >
                 Criar Projeto
               </Button>

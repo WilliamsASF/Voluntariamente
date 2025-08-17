@@ -1,13 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Users, Layers, CheckCircle, XCircle } from 'lucide-react';
-import { EstudanteService } from '../lib/services/estudantes';
-import { Estudante } from '../lib/types';
-import Card, { CardHeader, CardContent } from '../components/ui/card';
-import Button from '../components/ui/button';
-import Input from '../components/ui/input';
-import ProtectedRoute from '../components/ProtectedRoute';
+import { Plus, Users, CheckCircle, XCircle } from 'lucide-react';
+import { EstudanteService } from '../../lib/services/estudantes';
+import { Estudante } from '../../lib/types';
+import Card, { CardHeader, CardContent } from '../../components/ui/card';
+import Button from '../../components/ui/button';
+import Input from '../../components/ui/input';
+import ProtectedRoute from '../../components/ProtectedRoute';
 
 type Etapa = {
   id: number;
@@ -38,11 +38,11 @@ export default function NovaTurmaPage() {
     try {
       setIsLoading(true);
       setError('');
-      
+
       const result = await EstudanteService.getAllEstudantes();
-      
+
       if (result.success && result.data) {
-        const alunosFormatados: AlunoSelecionado[] = result.data.map(est => ({
+        const alunosFormatados: AlunoSelecionado[] = result.data.map((est: Estudante) => ({
           id: est.student_id,
           nome: est.full_name,
           email: `${est.full_name.toLowerCase().replace(/\s+/g, '.')}@estudante.ufpe.br`,
@@ -52,7 +52,7 @@ export default function NovaTurmaPage() {
       } else {
         setError(result.error || 'Erro ao carregar estudantes');
       }
-    } catch (error) {
+    } catch {
       setError('Erro inesperado ao carregar estudantes');
     } finally {
       setIsLoading(false);
@@ -69,7 +69,7 @@ export default function NovaTurmaPage() {
   };
 
   const atualizarEtapa = (id: number, campo: keyof Etapa, valor: string) => {
-    setEtapas(etapas.map(etapa => 
+    setEtapas(etapas.map(etapa =>
       etapa.id === id ? { ...etapa, [campo]: valor } : etapa
     ));
   };
@@ -100,11 +100,9 @@ export default function NovaTurmaPage() {
         alunos: alunos.filter(aluno => aluno.selecionado)
       };
       console.log('Criando turma:', dadosTurma);
-      
-      // TODO: Implementar criação real da turma via API
+
       alert(`Turma "${nomeTurma}" criada com sucesso! ${alunosSelecionados} alunos matriculados.`);
-      
-      // Limpar formulário após criação
+
       setNomeTurma('');
       setEtapas([]);
       setAlunos(alunos.map(aluno => ({ ...aluno, selecionado: false })));
@@ -127,7 +125,6 @@ export default function NovaTurmaPage() {
   return (
     <ProtectedRoute>
       <div className="space-y-6">
-        {/* Header */}
         <div className="border-b border-gray-200 pb-4">
           <h1 className="text-3xl font-bold text-gray-800">Nova Turma</h1>
           <p className="text-gray-600 mt-2">
@@ -135,7 +132,6 @@ export default function NovaTurmaPage() {
           </p>
         </div>
 
-        {/* Error Message */}
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
             {error}
@@ -143,9 +139,7 @@ export default function NovaTurmaPage() {
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Coluna Esquerda - Dados da Turma */}
           <div className="space-y-6">
-            {/* Nome da Turma */}
             <Card>
               <CardHeader>
                 <h2 className="text-lg font-semibold text-gray-800">Informações da Turma</h2>
@@ -166,7 +160,6 @@ export default function NovaTurmaPage() {
               </CardContent>
             </Card>
 
-            {/* Seção de Etapas */}
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -219,7 +212,6 @@ export default function NovaTurmaPage() {
               </CardContent>
             </Card>
 
-            {/* Botão Criar Turma */}
             <Button
               onClick={criarTurma}
               disabled={!podeCriarTurma}
@@ -230,9 +222,7 @@ export default function NovaTurmaPage() {
             </Button>
           </div>
 
-          {/* Coluna Direita - Seleção de Alunos */}
           <div className="space-y-6">
-            {/* Busca de Alunos */}
             <Card>
               <CardHeader>
                 <h2 className="text-lg font-semibold text-gray-800">Seleção de Alunos</h2>
@@ -252,7 +242,6 @@ export default function NovaTurmaPage() {
               </CardContent>
             </Card>
 
-            {/* Lista de Alunos */}
             <Card>
               <CardHeader>
                 <div className="flex justify-between items-center">
