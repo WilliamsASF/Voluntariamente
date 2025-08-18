@@ -6,10 +6,12 @@ interface SelectProps {
   label: string;
   placeholder: string;
   options: { value: string; label: string }[];
+  value?: string;
+  onChange?: (value: string) => void;
 }
 
-const Select = ({ label, placeholder, options }: SelectProps) => {
-  const [selectedOption, setSelectedOption] = useState('');
+const Select = ({ label, placeholder, options, value, onChange }: SelectProps) => {
+  const [selectedOption, setSelectedOption] = useState(value || '');
 
   return (
     <div>
@@ -18,8 +20,12 @@ const Select = ({ label, placeholder, options }: SelectProps) => {
       </label>
       <select
         id="function"
-        value={selectedOption}
-        onChange={(e) => setSelectedOption(e.target.value)}
+        value={value || selectedOption}
+        onChange={(e) => {
+          const newValue = e.target.value;
+          setSelectedOption(newValue);
+          onChange?.(newValue);
+        }}
         className="mt-1 block w-full rounded-md border border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-red-500 focus:outline-none focus:ring-red-500 sm:text-sm"
       >
         <option value="" disabled>{placeholder}</option>

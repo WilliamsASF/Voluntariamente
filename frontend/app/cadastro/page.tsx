@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import Card, { CardHeader, CardContent } from '../../components/ui/card';
 import Button from '../../components/ui/button';
 import Select from '../../components/ui/select';
@@ -17,7 +18,8 @@ export default function Cadastro() {
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'Estudante'
+    role: 'aluno',
+    name: ''
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -44,7 +46,7 @@ export default function Cadastro() {
     setSuccess('');
 
     // Validações
-    if (!formData.username || !formData.email || !formData.password || !formData.confirmPassword) {
+    if (!formData.name || !formData.username || !formData.email || !formData.password || !formData.confirmPassword) {
       setError('Por favor, preencha todos os campos');
       return;
     }
@@ -64,7 +66,8 @@ export default function Cadastro() {
         username: formData.username,
         email: formData.email,
         password: formData.password,
-        role: formData.role
+        role: formData.role,
+        name: formData.name
       });
       
       if (result.success) {
@@ -87,8 +90,8 @@ export default function Cadastro() {
         <Image
           src="/logo.svg"
           alt="CInvoluntário Logo"
-          width={128}
-          height={128}
+          width={198}
+          height={198}
           className="object-contain"
         />
       </div>
@@ -116,10 +119,20 @@ export default function Cadastro() {
 
           <form className="space-y-4" onSubmit={onSubmit}>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Nome de usuário
-              </label>
               <Input
+                label="Nome completo"
+                name="name"
+                type="text"
+                placeholder="Digite seu nome completo"
+                value={formData.name}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+
+            <div>
+              <Input
+                label="Nome de usuário"
                 name="username"
                 type="text"
                 placeholder="Digite seu nome de usuário"
@@ -130,10 +143,8 @@ export default function Cadastro() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email
-              </label>
               <Input
+                label="Email"
                 name="email"
                 type="email"
                 placeholder="Digite seu email"
@@ -144,15 +155,12 @@ export default function Cadastro() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Função
-              </label>
               <Select
+                label="Função"
                 placeholder="Selecione uma função"
                 options={[
-                  { value: 'Estudante', label: 'Estudante' },
-                  { value: 'Professor', label: 'Professor' },
-                  { value: 'Admin', label: 'Administrador' },
+                  { value: 'aluno', label: 'Estudante' },
+                  { value: 'professor', label: 'Professor' },
                 ]}
                 value={formData.role}
                 onChange={handleSelectChange}
@@ -160,10 +168,8 @@ export default function Cadastro() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Senha
-              </label>
               <Input
+                label="Senha"
                 name="password"
                 type="password"
                 placeholder="Digite sua senha"
@@ -174,10 +180,8 @@ export default function Cadastro() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Confirmar Senha
-              </label>
               <Input
+                label="Confirmar Senha"
                 name="confirmPassword"
                 type="password"
                 placeholder="Confirme sua senha"
@@ -190,7 +194,7 @@ export default function Cadastro() {
             <Button 
               type="submit" 
               variant="primary" 
-              className="w-full"
+              className="mx-auto block"
               disabled={isLoading}
             >
               {isLoading ? 'Cadastrando...' : 'Finalizar Cadastro'}
@@ -198,7 +202,7 @@ export default function Cadastro() {
 
             {/* Link para login */}
             <p className="text-sm text-center text-gray-500">
-              Já tem uma conta? <a href="/" className="text-red-600 underline">Faça login</a>
+              Já tem uma conta? <Link href="/" className="text-red-600 underline">Faça login</Link>
             </p>
           </form>
         </CardContent>

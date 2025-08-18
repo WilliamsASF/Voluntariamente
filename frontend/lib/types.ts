@@ -3,7 +3,8 @@ export interface User {
   user_id: number;
   username: string;
   email: string;
-  role: string;
+  role: 'aluno' | 'professor';
+  name: string;
 }
 
 export interface UserCreate {
@@ -201,4 +202,61 @@ export interface PaginatedResponse<T> {
   page: number;
   size: number;
   pages: number;
+}
+
+export interface Student {
+  id: string;
+  name: string;
+  email: string;
+  profilePicture?: string;
+}
+
+export interface Document {
+  id: string;
+  title: string;
+  stage: string;
+  fileUrl?: string;
+  uploadedAt: string;
+}
+
+export interface Deliverable {
+  stage: string;
+  status: 'completed' | 'pending' | 'rejected';
+  completedAt?: string;
+}
+
+export interface Group {
+  id: string;
+  name: string;
+  ngoName: string;
+  problemDescription: string;
+  category: string;
+  students: Student[];
+  documents: Document[];
+  deliverables: Deliverable[];
+  assignedProjects: string[]; // Array of project IDs assigned to this group
+  createdAt: string;
+}
+
+export interface Project {
+  id: string;
+  name: string;
+  description: string;
+  stages: Array<{ id: string; name: string; description: string }>;
+  createdAt: string;
+  assignedToGroup?: string; // ID of the group this project is assigned to
+}
+
+export interface Turma {
+  id: string;
+  title: string;
+  subtitle: string;
+  instructor: string;
+  instructorImage: string;
+  headerColor: string;
+  year: string;
+  coverImage?: string;
+  students: Student[];
+  groups: Group[];
+  projects: Project[];
 }

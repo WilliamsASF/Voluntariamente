@@ -39,9 +39,6 @@ curl -s -o /dev/null -w "Configurações: %{http_code}\n" http://localhost:3000/
 echo "✅ Testando página de cadastro..."
 curl -s -o /dev/null -w "Cadastro: %{http_code}\n" http://localhost:3000/cadastro
 
-# Testar página de login
-echo "✅ Testando página de login..."
-curl -s -o /dev/null -w "Login: %{http_code}\n" http://localhost:3000/login
 
 echo ""
 echo "🎯 TESTES DE FUNCIONALIDADE"
@@ -57,7 +54,6 @@ echo "- Projetos: $(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000
 echo "- Nova Turma: $(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/nova-turma)"
 echo "- Configurações: $(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/configuracoes)"
 echo "- Cadastro: $(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/cadastro)"
-echo "- Login: $(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/login)"
 
 echo ""
 echo "🚀 FRONTEND ESTÁ FUNCIONANDO!"

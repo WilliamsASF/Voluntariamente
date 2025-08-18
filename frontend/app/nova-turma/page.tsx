@@ -1,311 +1,877 @@
-'use client';
+"use client"
 
-import { useState, useEffect } from 'react';
-import { Plus, Users, Layers, CheckCircle, XCircle } from 'lucide-react';
-import { EstudanteService } from '../lib/services/estudantes';
-import { Estudante } from '../lib/types';
-import Card, { CardHeader, CardContent } from '../components/ui/card';
-import Button from '../components/ui/button';
-import Input from '../components/ui/input';
-import ProtectedRoute from '../components/ProtectedRoute';
+import { useState, useEffect } from "react"
+import Button from "../../components/ui/button"
+import Input from "../../components/ui/input"
+import Textarea from "../../components/ui/textarea"
+import Card from "../../components/ui/card"
+import { Plus, Menu, Trash2, X, User, Building, FileText, Package } from "lucide-react"
+import ProtectedRoute from '../../components/ProtectedRoute'
+import { useAuth } from '../../hooks/useAuth'
+import { Group, Student, Document, Deliverable, Project } from '../../lib/types'
+import ConfirmationDialog from '../../components/ConfirmationDialog'
 
-type Etapa = {
-  id: number;
-  nome: string;
-  descricao: string;
-};
-
-type AlunoSelecionado = {
-  id: number;
-  nome: string;
-  email: string;
-  selecionado: boolean;
-};
+interface Stage {
+  id: string
+  name: string
+  description: string
+}
 
 export default function NovaTurmaPage() {
-  const [nomeTurma, setNomeTurma] = useState('');
-  const [etapas, setEtapas] = useState<Etapa[]>([]);
-  const [alunos, setAlunos] = useState<AlunoSelecionado[]>([]);
-  const [buscaAluno, setBuscaAluno] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [className, setClassName] = useState("")
+  const [projects, setProjects] = useState<Project[]>([])
+  const [searchTerm, setSearchTerm] = useState("")
+  const [showNewStudentForm, setShowNewStudentForm] = useState(false)
+  const [newStudent, setNewStudent] = useState({ login: "", email: "" })
+  const [showNewGroupForm, setShowNewGroupForm] = useState(false)
+  const [newGroup, setNewGroup] = useState({
+    name: "",
+    ngoName: "",
+    problemDescription: "",
+    category: "Vistoria"
+  })
+  
+  const { user } = useAuth();
+  const userRole = user?.role === 'professor' ? 'Professor' : 'Aluno';
 
+  // Student data - starts empty, will be populated when new students are added
+  const [students, setStudents] = useState<Student[]>([])
+  
+  // Group data - starts empty, will be populated when new groups are created
+  const [groups, setGroups] = useState<Group[]>([])
+
+  // Confirmation dialog state
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [studentToDelete, setStudentToDelete] = useState<Student | null>(null)
+
+  // Selected students state
+  const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set())
+
+  // Load global students on component mount
   useEffect(() => {
-    loadEstudantes();
+    const globalStudents = JSON.parse(localStorage.getItem('globalStudents') || '[]');
+    
+    // If no global students exist, create some initial ones for testing
+    if (globalStudents.length === 0) {
+      const initialStudents: Student[] = [
+        {
+          id: '1',
+          name: 'João Silva',
+          email: 'joao.silva@email.com'
+        },
+        {
+          id: '2',
+          name: 'Maria Santos',
+          email: 'maria.santos@email.com'
+        },
+        {
+          id: '3',
+          name: 'Pedro Costa',
+          email: 'pedro.costa@email.com'
+        },
+        {
+          id: '4',
+          name: 'Ana Oliveira',
+          email: 'ana.oliveira@email.com'
+        },
+        {
+          id: '5',
+          name: 'Carlos Ferreira',
+          email: 'carlos.ferreira@email.com'
+        },
+        {
+          id: '6',
+          name: 'Lucia Rodrigues',
+          email: 'lucia.rodrigues@email.com'
+        },
+        {
+          id: '7',
+          name: 'Roberto Almeida',
+          email: 'roberto.almeida@email.com'
+        },
+        {
+          id: '8',
+          name: 'Fernanda Lima',
+          email: 'fernanda.lima@email.com'
+        },
+        {
+          id: '9',
+          name: 'Diego Souza',
+          email: 'diego.souza@email.com'
+        },
+        {
+          id: '10',
+          name: 'Camila Martins',
+          email: 'camila.martins@email.com'
+        },
+        {
+          id: '11',
+          name: 'Rafael Pereira',
+          email: 'rafael.pereira@email.com'
+        },
+        {
+          id: '12',
+          name: 'Juliana Cardoso',
+          email: 'juliana.cardoso@email.com'
+        }
+      ];
+      
+      localStorage.setItem('globalStudents', JSON.stringify(initialStudents));
+      setStudents(initialStudents);
+    } else {
+      setStudents(globalStudents);
+    }
   }, []);
 
-  const loadEstudantes = async () => {
-    try {
-      setIsLoading(true);
-      setError('');
-      
-      const result = await EstudanteService.getAllEstudantes();
-      
-      if (result.success && result.data) {
-        const alunosFormatados: AlunoSelecionado[] = result.data.map(est => ({
-          id: est.student_id,
-          nome: est.full_name,
-          email: `${est.full_name.toLowerCase().replace(/\s+/g, '.')}@estudante.ufpe.br`,
-          selecionado: false
-        }));
-        setAlunos(alunosFormatados);
-      } else {
-        setError(result.error || 'Erro ao carregar estudantes');
-      }
-    } catch (error) {
-      setError('Erro inesperado ao carregar estudantes');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const adicionarEtapa = () => {
-    const novaEtapa: Etapa = {
-      id: Date.now(),
-      nome: '',
-      descricao: ''
-    };
-    setEtapas([...etapas, novaEtapa]);
-  };
-
-  const atualizarEtapa = (id: number, campo: keyof Etapa, valor: string) => {
-    setEtapas(etapas.map(etapa => 
-      etapa.id === id ? { ...etapa, [campo]: valor } : etapa
-    ));
-  };
-
-  const removerEtapa = (id: number) => {
-    setEtapas(etapas.filter(etapa => etapa.id !== id));
-  };
-
-  const toggleAluno = (id: number) => {
-    setAlunos(alunos.map(aluno =>
-      aluno.id === id ? { ...aluno, selecionado: !aluno.selecionado } : aluno
-    ));
-  };
-
-  const alunosFiltrados = alunos.filter(aluno =>
-    aluno.nome.toLowerCase().includes(buscaAluno.toLowerCase()) ||
-    aluno.email.toLowerCase().includes(buscaAluno.toLowerCase())
-  );
-
-  const alunosSelecionados = alunos.filter(aluno => aluno.selecionado).length;
-  const podeCriarTurma = nomeTurma.trim() !== '' && alunosSelecionados > 0;
-
-  const criarTurma = () => {
-    if (podeCriarTurma) {
-      const dadosTurma = {
-        nome: nomeTurma,
-        etapas: etapas.filter(etapa => etapa.nome.trim() !== ''),
-        alunos: alunos.filter(aluno => aluno.selecionado)
+  // Create a test turma for immediate testing
+  useEffect(() => {
+    const existingTurmas = JSON.parse(localStorage.getItem('turmas') || '[]');
+    
+    // Only create test turma if none exist
+    if (existingTurmas.length === 0) {
+      const testTurma = {
+        id: 'test-turma-1',
+        title: 'Turma de Teste - Desenvolvimento de Software',
+        subtitle: 'Turma criada para testar funcionalidades',
+        instructor: 'Professor Teste',
+        instructorImage: '',
+        headerColor: 'bg-blue-600',
+        year: '2024',
+        projects: [
+          {
+            id: 'project-1',
+            name: 'Sistema de Gestão',
+            description: 'Desenvolvimento de sistema completo para ONG',
+            stages: [
+              { id: '1', name: 'Etapa 1', description: 'Análise de Requisitos' },
+              { id: '2', name: 'Etapa 2', description: 'Design do Sistema' },
+              { id: '3', name: 'Etapa 3', description: 'Implementação' },
+              { id: '4', name: 'Etapa 4', description: 'Testes e Deploy' }
+            ],
+            createdAt: new Date().toISOString()
+          }
+        ],
+        students: [
+          {
+            id: '1',
+            name: 'João Silva',
+            email: 'joao.silva@email.com'
+          },
+          {
+            id: '2',
+            name: 'Maria Santos',
+            email: 'maria.santos@email.com'
+          },
+          {
+            id: '3',
+            name: 'Pedro Costa',
+            email: 'pedro.costa@email.com'
+          },
+          {
+            id: '4',
+            name: 'Ana Oliveira',
+            email: 'ana.oliveira@email.com'
+          },
+          {
+            id: '5',
+            name: 'Carlos Ferreira',
+            email: 'carlos.ferreira@email.com'
+          },
+          {
+            id: '6',
+            name: 'Lucia Rodrigues',
+            email: 'lucia.rodrigues@email.com'
+          },
+          {
+            id: '7',
+            name: 'Roberto Almeida',
+            email: 'roberto.almeida@email.com'
+          },
+          {
+            id: '8',
+            name: 'Fernanda Lima',
+            email: 'fernanda.lima@email.com'
+          },
+          {
+            id: '9',
+            name: 'Diego Souza',
+            email: 'diego.souza@email.com'
+          },
+          {
+            id: '10',
+            name: 'Camila Martins',
+            email: 'camila.martins@email.com'
+          },
+          {
+            id: '11',
+            name: 'Rafael Pereira',
+            email: 'rafael.pereira@email.com'
+          },
+          {
+            id: '12',
+            name: 'Juliana Cardoso',
+            email: 'juliana.cardoso@email.com'
+          }
+        ],
+        groups: [
+          {
+            id: 'group-1',
+            name: 'Grupo Alpha',
+            ngoName: 'ONG Teste 1',
+            problemDescription: 'Sistema de gestão para ONG',
+            category: 'Desenvolvimento',
+            students: [],
+            documents: [
+              {
+                id: 'doc-1',
+                title: 'Documento de Análise',
+                stage: 'Etapa 1',
+                uploadedAt: new Date().toISOString()
+              }
+            ],
+            deliverables: [
+              { stage: 'Etapa 1', status: 'completed' },
+              { stage: 'Etapa 2', status: 'pending' },
+              { stage: 'Etapa 3', status: 'pending' },
+              { stage: 'Etapa 4', status: 'pending' }
+            ],
+            createdAt: new Date().toISOString()
+          },
+          {
+            id: 'group-2',
+            name: 'Grupo Beta',
+            ngoName: 'ONG Teste 2',
+            problemDescription: 'Aplicativo mobile para voluntários',
+            category: 'Mobile',
+            students: [],
+            documents: [
+              {
+                id: 'doc-2',
+                title: 'Especificação Técnica',
+                stage: 'Etapa 1',
+                uploadedAt: new Date().toISOString()
+              }
+            ],
+            deliverables: [
+              { stage: 'Etapa 1', status: 'completed' },
+              { stage: 'Etapa 2', status: 'pending' },
+              { stage: 'Etapa 3', status: 'pending' },
+              { stage: 'Etapa 4', status: 'pending' }
+            ],
+            createdAt: new Date().toISOString()
+          }
+        ]
       };
-      console.log('Criando turma:', dadosTurma);
       
-      // TODO: Implementar criação real da turma via API
-      alert(`Turma "${nomeTurma}" criada com sucesso! ${alunosSelecionados} alunos matriculados.`);
-      
-      // Limpar formulário após criação
-      setNomeTurma('');
-      setEtapas([]);
-      setAlunos(alunos.map(aluno => ({ ...aluno, selecionado: false })));
+      existingTurmas.push(testTurma);
+      localStorage.setItem('turmas', JSON.stringify(existingTurmas));
     }
-  };
+  }, []);
 
-  if (isLoading) {
-    return (
-      <ProtectedRoute>
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Carregando estudantes...</p>
-          </div>
-        </div>
-      </ProtectedRoute>
-    );
+  const addProject = () => {
+    const newProject: Project = {
+      id: Date.now().toString(),
+      name: "",
+      description: "",
+      stages: [
+        { id: "1", name: "Etapa 1", description: "Descrição da Etapa 1" },
+        { id: "2", name: "Etapa 2", description: "Descrição da Etapa 2" },
+        { id: "3", name: "Etapa 3", description: "Descrição da Etapa 3" },
+        { id: "4", name: "Etapa 4", description: "Descrição da Etapa 4" }
+      ],
+      createdAt: new Date().toISOString()
+    }
+    setProjects([...projects, newProject])
+  }
+
+  const removeProject = (id: string) => {
+    setProjects(projects.filter((project) => project.id !== id))
+  }
+
+  const updateProject = (id: string, field: keyof Project, value: string) => {
+    setProjects(projects.map((project) => (project.id === id ? { ...project, [field]: value } : project)))
+  }
+
+  const updateProjectStage = (projectId: string, stageId: string, field: keyof { id: string; name: string; description: string }, value: string) => {
+    setProjects(projects.map(project => 
+      project.id === projectId 
+        ? {
+            ...project,
+            stages: project.stages.map(stage =>
+              stage.id === stageId ? { ...stage, [field]: value } : stage
+            )
+          }
+        : project
+    ))
+  }
+
+  const addStageToProject = (projectId: string) => {
+    setProjects(projects.map(project => 
+      project.id === projectId 
+        ? {
+            ...project,
+            stages: [
+              ...project.stages,
+              {
+                id: Date.now().toString(),
+                name: `Etapa ${project.stages.length + 1}`,
+                description: "Descrição da nova etapa"
+              }
+            ]
+          }
+        : project
+    ))
+  }
+
+  const removeStageFromProject = (projectId: string, stageId: string) => {
+    setProjects(projects.map(project => 
+      project.id === projectId 
+        ? {
+            ...project,
+            stages: project.stages.filter(stage => stage.id !== stageId)
+          }
+        : project
+    ))
+  }
+
+  const handleNewStudentSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (newStudent.login && newStudent.email) {
+      // Create new student and add to the list
+      const newStudentObj: Student = {
+        id: Date.now().toString(),
+        name: newStudent.login,
+        email: newStudent.email,
+      }
+      
+      // Add to local state
+      setStudents([...students, newStudentObj])
+      
+      // Also add to global students list
+      const globalStudents = JSON.parse(localStorage.getItem('globalStudents') || '[]');
+      globalStudents.push(newStudentObj);
+      localStorage.setItem('globalStudents', JSON.stringify(globalStudents));
+      
+      setNewStudent({ login: "", email: "" })
+      setShowNewStudentForm(false)
+    }
+  }
+
+  const toggleNewStudentForm = () => {
+    setShowNewStudentForm(!showNewStudentForm)
+  }
+
+  const removeStudent = (id: string) => {
+    // Remove from local state
+    setStudents(students.filter((student) => student.id !== id))
+    
+    // Also remove from global students list
+    const globalStudents = JSON.parse(localStorage.getItem('globalStudents') || '[]');
+    const updatedGlobalStudents = globalStudents.filter((student: Student) => student.id !== id);
+    localStorage.setItem('globalStudents', JSON.stringify(updatedGlobalStudents));
+  }
+
+  const handleDeleteStudentClick = (student: Student) => {
+    setStudentToDelete(student);
+    setShowDeleteDialog(true);
+  }
+
+  const confirmDeleteStudent = () => {
+    if (studentToDelete) {
+      removeStudent(studentToDelete.id);
+      setStudentToDelete(null);
+    }
+  }
+
+  const toggleStudentSelection = (studentId: string) => {
+    setSelectedStudents(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(studentId)) {
+        newSet.delete(studentId);
+      } else {
+        newSet.add(studentId);
+      }
+      return newSet;
+    });
+  }
+
+  const selectAllStudents = () => {
+    setSelectedStudents(new Set(students.map(s => s.id)));
+  }
+
+  const deselectAllStudents = () => {
+    setSelectedStudents(new Set());
+  }
+
+  const handleNewGroupSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (newGroup.name && newGroup.ngoName) {
+      // Create new group with default structure
+      const newGroupObj: Group = {
+        id: Date.now().toString(),
+        name: newGroup.name,
+        ngoName: newGroup.ngoName,
+        problemDescription: newGroup.problemDescription,
+        category: newGroup.category,
+        students: [], // Will be populated later
+        documents: [
+          {
+            id: Date.now().toString(),
+            title: "Visita ao espaço físico da Ong",
+            stage: "Etapa 1",
+            uploadedAt: new Date().toISOString()
+          }
+        ],
+        deliverables: [
+          { stage: "Etapa 1", status: "completed" },
+          { stage: "Etapa 2", status: "pending" },
+          { stage: "Etapa 3", status: "pending" },
+          { stage: "Etapa 4", status: "pending" }
+        ],
+        assignedProjects: [],
+        createdAt: new Date().toISOString()
+      }
+      setGroups([...groups, newGroupObj])
+      setNewGroup({ name: "", ngoName: "", problemDescription: "", category: "Vistoria" })
+      setShowNewGroupForm(false)
+    }
+  }
+
+  const toggleNewGroupForm = () => {
+    setShowNewGroupForm(!showNewGroupForm)
+  }
+
+  const removeGroup = (id: string) => {
+    setGroups(groups.filter((group) => group.id !== id))
+  }
+
+  const handleCreateTurma = () => {
+    if (!className.trim()) {
+      alert("Por favor, insira o nome da turma")
+      return
+    }
+
+    // Get only selected students
+    const selectedStudentList = students.filter(student => selectedStudents.has(student.id));
+    
+    if (selectedStudentList.length === 0) {
+      alert("Por favor, selecione pelo menos um aluno para a turma")
+      return
+    }
+
+    const turmaData = {
+      id: Date.now().toString(),
+      title: className,
+      subtitle: `Turma criada por ${user?.name || user?.username}`,
+      instructor: user?.name || user?.username || "Professor",
+      instructorImage: "",
+      headerColor: "bg-blue-600",
+      year: new Date().getFullYear().toString(),
+      students: selectedStudentList,
+      groups: groups,
+      projects: projects
+    }
+
+    // Save to localStorage
+    const existingTurmas = JSON.parse(localStorage.getItem('turmas') || '[]')
+    existingTurmas.push(turmaData)
+    localStorage.setItem('turmas', JSON.stringify(existingTurmas))
+
+    // Redirect to grupos page
+    window.location.href = '/grupos'
   }
 
   return (
     <ProtectedRoute>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="border-b border-gray-200 pb-4">
-          <h1 className="text-3xl font-bold text-gray-800">Nova Turma</h1>
-          <p className="text-gray-600 mt-2">
-            Crie uma nova turma para organizar projetos e gerenciar alunos
-          </p>
-        </div>
-
-        {/* Error Message */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
-            {error}
-          </div>
-        )}
+      <div className="p-6">
+        <h1 className="text-2xl font-semibold text-gray-900 mb-8">Nova turma</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Coluna Esquerda - Dados da Turma */}
-          <div className="space-y-6">
-            {/* Nome da Turma */}
-            <Card>
-              <CardHeader>
-                <h2 className="text-lg font-semibold text-gray-800">Informações da Turma</h2>
-              </CardHeader>
-              <CardContent>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Nome da turma *
-                  </label>
+          {/* Left Column */}
+      <div className="space-y-6">
+            {/* Class Name Section */}
+            <div>
+              <h2 className="text-lg font-medium text-gray-900 mb-4">Nome da turma</h2>
+              <div className="relative">
+                <Input
+                  label=""
+                  value={className}
+                  onChange={(e) => setClassName(e.target.value)}
+                  className="pl-10 bg-gray-100 border-0 h-12"
+                  placeholder=""
+                />
+                <Menu className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              </div>
+            </div>
+
+            {/* Projects Section */}
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-medium text-gray-900">Projetos</h2>
+                <Button
+                  onClick={addProject}
+                  variant="default"
+                  className="bg-gray-100 border-0 text-gray-600 hover:bg-gray-200"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Novo Projeto
+                </Button>
+        </div>
+
+              <div className="space-y-4">
+                {projects.map((project, index) => (
+                  <Card key={project.id} className="p-4 bg-white border border-gray-200">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="font-medium text-gray-700">Projeto {index + 1}</h3>
+                      <Button
+                        onClick={() => removeProject(project.id)}
+                        variant="default"
+                        className="text-gray-400 hover:text-red-500"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <div className="space-y-3">
+                      <Input
+                        label=""
+                        value={project.name}
+                        onChange={(e) => updateProject(project.id, "name", e.target.value)}
+                        placeholder="Nome do Projeto"
+                        className="bg-gray-50 border-0"
+                      />
+                      <Textarea
+                        value={project.description}
+                        onChange={(e) => updateProject(project.id, "description", e.target.value)}
+                        placeholder="Descrição do projeto"
+                        className="bg-gray-50 border-0 min-h-[60px] resize-none"
+                      />
+                      
+                                             {/* Project Stages */}
+                       <div className="mt-4">
+                         <div className="flex items-center justify-between mb-3">
+                           <h4 className="text-sm font-medium text-gray-700">Etapas do Projeto</h4>
+                           <Button
+                             onClick={() => addStageToProject(project.id)}
+                             variant="default"
+                             className="text-xs px-2 py-1 h-auto bg-blue-100 text-blue-700 hover:bg-blue-200"
+                           >
+                             <Plus className="h-3 w-3 mr-1" />
+                             Adicionar Etapa
+                           </Button>
+          </div>
+                         <div className="space-y-3">
+                           {project.stages.map((stage, stageIndex) => (
+                             <div key={stage.id} className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                               <div className="flex items-center justify-between mb-2">
+                                 <span className="text-xs font-medium text-gray-600">Etapa {stageIndex + 1}</span>
+                                 {project.stages.length > 1 && (
+                                   <Button
+                                     onClick={() => removeStageFromProject(project.id, stage.id)}
+                                     variant="default"
+                                     className="h-5 w-5 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                   >
+                                     <X className="h-3 w-3" />
+                                   </Button>
+                                 )}
+                               </div>
+                               <div className="space-y-2">
                   <Input
-                    type="text"
-                    value={nomeTurma}
-                    onChange={(e) => setNomeTurma(e.target.value)}
-                    placeholder="Digite o nome da turma"
-                    required
+                                   label=""
+                                   value={stage.name}
+                                   onChange={(e) => updateProjectStage(project.id, stage.id, "name", e.target.value)}
+                                   placeholder="Nome da etapa"
+                                   className="bg-white border border-gray-200 text-sm"
+                                 />
+                                 <Textarea
+                                   value={stage.description}
+                                   onChange={(e) => updateProjectStage(project.id, stage.id, "description", e.target.value)}
+                                   placeholder="Descrição da etapa"
+                                   className="bg-white border border-gray-200 min-h-[60px] resize-none text-sm"
                   />
                 </div>
-              </CardContent>
+                             </div>
+                           ))}
+                         </div>
+                       </div>
+                    </div>
             </Card>
+                ))}
+              </div>
+            </div>
 
-            {/* Seção de Etapas */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-gray-800">Etapas do Projeto</h2>
+            {/* Groups Section */}
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-medium text-gray-900 flex items-center gap-2">
+                  <Building className="h-5 w-5 text-blue-600" />
+                  Grupos
+                </h2>
+                {userRole === "Professor" && (
                   <Button
-                    onClick={adicionarEtapa}
-                    size="sm"
-                    className="flex items-center gap-2"
+                    onClick={toggleNewGroupForm}
+                    variant="default"
+                    className="bg-gray-100 border-0 text-gray-600 hover:bg-gray-200"
                   >
-                    <Plus size={16} />
-                    Adicionar
+                    <Plus className="h-4 w-4 mr-2" />
+                    Novo Grupo
                   </Button>
+                )}
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {etapas.length === 0 ? (
-                    <p className="text-sm text-gray-500 text-center py-4">
-                      Adicione etapas para organizar o projeto
-                    </p>
-                  ) : (
-                    etapas.map((etapa) => (
-                      <div key={etapa.id} className="flex space-x-2">
+
+              {/* New Group Form */}
+              {userRole === "Professor" && showNewGroupForm && (
+                <Card className="p-4 bg-white border border-gray-200 mb-6">
+                  <form onSubmit={handleNewGroupSubmit} className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
                         <Input
-                          type="text"
-                          value={etapa.nome}
-                          onChange={(e) => atualizarEtapa(etapa.id, 'nome', e.target.value)}
-                          placeholder="Nome da etapa"
-                          className="flex-1"
+                        label=""
+                        value={newGroup.name}
+                        onChange={(e) => setNewGroup({ ...newGroup, name: e.target.value })}
+                        placeholder="Nome do Grupo"
+                        className="bg-gray-50 border-0"
                         />
                         <Input
-                          type="text"
-                          value={etapa.descricao}
-                          onChange={(e) => atualizarEtapa(etapa.id, 'descricao', e.target.value)}
-                          placeholder="Descrição"
-                          className="flex-1"
-                        />
+                        label=""
+                        value={newGroup.ngoName}
+                        onChange={(e) => setNewGroup({ ...newGroup, ngoName: e.target.value })}
+                        placeholder="Nome da ONG"
+                        className="bg-gray-50 border-0"
+                      />
+                    </div>
+                    <Textarea
+                      value={newGroup.problemDescription}
+                      onChange={(e) => setNewGroup({ ...newGroup, problemDescription: e.target.value })}
+                      placeholder="Descrição do problema"
+                      className="bg-gray-50 border-0 min-h-[60px] resize-none"
+                    />
+                    <div className="flex justify-end space-x-2">
+                      <Button
+                        type="button"
+                        variant="default"
+                        onClick={toggleNewGroupForm}
+                        className="bg-gray-200 text-gray-700 hover:bg-gray-300"
+                      >
+                        Cancelar
+                      </Button>
                         <Button
-                          onClick={() => removerEtapa(etapa.id)}
-                          variant="outline"
-                          size="sm"
-                          className="text-red-600 border-red-200 hover:bg-red-50"
-                        >
-                          <XCircle size={16} />
+                        type="submit"
+                        variant="primary"
+                        className="bg-red-500 hover:bg-red-600 text-white"
+                      >
+                        Adicionar
                         </Button>
                       </div>
-                    ))
+                  </form>
+                </Card>
+              )}
+
+              {/* Groups List */}
+              <div className="space-y-3">
+                {groups.map((group) => (
+                  <Card key={group.id} className="p-3 bg-blue-50 border border-blue-200 relative group">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Building className="h-5 w-5 text-blue-600" />
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">{group.name}</p>
+                          <p className="text-xs text-gray-600">{group.ngoName}</p>
+                        </div>
+                      </div>
+                      {userRole === "Professor" && (
+                        <Button
+                          variant="default"
+                          onClick={() => removeGroup(group.id)}
+                          className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="h-3 w-3 text-gray-400" />
+                        </Button>
                   )}
                 </div>
-              </CardContent>
             </Card>
-
-            {/* Botão Criar Turma */}
-            <Button
-              onClick={criarTurma}
-              disabled={!podeCriarTurma}
-              className={`w-full py-3 ${!podeCriarTurma ? 'opacity-50 cursor-not-allowed' : ''}`}
-            >
-              <CheckCircle size={18} className="mr-2" />
-              Criar Turma
-            </Button>
+                ))}
+              </div>
+            </div>
           </div>
 
-          {/* Coluna Direita - Seleção de Alunos */}
-          <div className="space-y-6">
-            {/* Busca de Alunos */}
-            <Card>
-              <CardHeader>
-                <h2 className="text-lg font-semibold text-gray-800">Seleção de Alunos</h2>
-              </CardHeader>
-              <CardContent>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Buscar alunos
-                  </label>
+          {/* Right Column */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-medium text-gray-900">Alunos</h2>
+              {userRole === "Professor" && (
+            <Button
+                  onClick={toggleNewStudentForm}
+                  variant="default"
+                  className="bg-gray-100 border-0 text-gray-600 hover:bg-gray-200"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Novo Aluno
+            </Button>
+              )}
+          </div>
+
+            {/* New Student Form */}
+            {userRole === "Professor" && showNewStudentForm && (
+              <Card className="p-4 bg-white border border-gray-200 mb-6">
+                <form onSubmit={handleNewStudentSubmit} className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <Input
+                      label=""
+                      value={newStudent.login}
+                      onChange={(e) => setNewStudent({ ...newStudent, login: e.target.value })}
+                      placeholder="Login"
+                      className="bg-gray-50 border-0"
+                    />
                   <Input
-                    type="text"
-                    value={buscaAluno}
-                    onChange={(e) => setBuscaAluno(e.target.value)}
-                    placeholder="Digite o nome ou email do aluno"
+                      label=""
+                      value={newStudent.email}
+                      onChange={(e) => setNewStudent({ ...newStudent, email: e.target.value })}
+                      placeholder="Email"
+                      className="bg-gray-50 border-0"
                   />
                 </div>
-              </CardContent>
+                  <div className="flex justify-end space-x-2">
+                    <Button
+                      type="button"
+                      variant="default"
+                      onClick={toggleNewStudentForm}
+                      className="bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    >
+                      Cancelar
+                    </Button>
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      className="bg-red-500 hover:bg-red-600 text-white"
+                    >
+                      Adicionar
+                    </Button>
+                  </div>
+                </form>
             </Card>
+            )}
 
-            {/* Lista de Alunos */}
-            <Card>
-              <CardHeader>
-                <div className="flex justify-between items-center">
-                  <h2 className="text-lg font-semibold text-gray-800">
-                    Alunos Disponíveis
-                  </h2>
+                         {/* Search Input */}
+             <div className="relative mb-4">
+               <Input
+                 label=""
+                 value={searchTerm}
+                 onChange={(e) => setSearchTerm(e.target.value)}
+                 placeholder="Email ou nome"
+                 className="pl-10 bg-white border border-gray-200 h-12"
+               />
+               <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+             </div>
+
+             {/* Selection Controls */}
+             <div className="flex items-center justify-between mb-4">
+               <div className="flex items-center gap-2">
                   <span className="text-sm text-gray-600">
-                    {alunosSelecionados} selecionados
+                   {selectedStudents.size} de {students.length} alunos selecionados
                   </span>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="max-h-96 overflow-y-auto border border-gray-200 rounded-md">
-                  {alunosFiltrados.length > 0 ? (
-                    alunosFiltrados.map((aluno) => (
-                      <div
-                        key={aluno.id}
-                        className={`flex items-center p-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${
-                          aluno.selecionado ? 'bg-red-50 border-red-200' : ''
-                        }`}
-                        onClick={() => toggleAluno(aluno.id)}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={aluno.selecionado}
-                          onChange={() => toggleAluno(aluno.id)}
-                          className="mr-3 h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
-                        />
-                        <div className="flex-1">
-                          <p className={`font-medium ${aluno.selecionado ? 'text-red-800' : 'text-gray-900'}`}>
-                            {aluno.nome}
-                          </p>
-                          <p className={`text-sm ${aluno.selecionado ? 'text-red-600' : 'text-gray-500'}`}>
-                            {aluno.email}
-                          </p>
-                        </div>
-                        {aluno.selecionado && (
-                          <CheckCircle className="h-5 w-5 text-red-600" />
+               <div className="flex gap-2">
+                 <Button
+                   onClick={selectAllStudents}
+                   variant="default"
+                   className="text-xs px-3 py-1 h-auto bg-blue-100 text-blue-700 hover:bg-blue-200"
+                 >
+                   Selecionar Todos
+                 </Button>
+                 <Button
+                   onClick={deselectAllStudents}
+                   variant="default"
+                   className="text-xs px-3 py-1 h-auto bg-gray-100 text-gray-700 hover:bg-gray-300"
+                 >
+                   Desmarcar Todos
+                 </Button>
+               </div>
+             </div>
+
+                         {/* Students Grid */}
+             <div className="grid grid-cols-3 gap-3 mb-6">
+               {students.map((student) => (
+                 <Card 
+                   key={student.id} 
+                   className={`p-3 border-0 relative group cursor-pointer transition-all ${
+                     selectedStudents.has(student.id) 
+                       ? 'bg-blue-100 border-2 border-blue-300' 
+                       : 'bg-gray-100 hover:bg-gray-200'
+                   }`}
+                   onClick={() => toggleStudentSelection(student.id)}
+                 >
+                   <div className="flex items-center space-x-2">
+                     {/* Checkbox */}
+                     <div className="flex-shrink-0">
+                       <div className={`w-4 h-4 border-2 rounded transition-colors ${
+                         selectedStudents.has(student.id)
+                           ? 'bg-blue-600 border-blue-600'
+                           : 'border-gray-400'
+                       }`}>
+                         {selectedStudents.has(student.id) && (
+                           <svg className="w-3 h-3 text-white mx-auto mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                           </svg>
                         )}
                       </div>
-                    ))
-                  ) : (
-                    <div className="p-4 text-center text-gray-500">
-                      <Users className="mx-auto h-8 w-8 text-gray-400 mb-2" />
-                      Nenhum aluno encontrado
+                     </div>
+                     
+                     {/* Student Info */}
+                     <div className="flex-1 min-w-0">
+                       <p className="text-sm font-medium text-gray-900 truncate">{student.name}</p>
+                       <p className="text-xs text-gray-500 truncate">{student.email}</p>
+                     </div>
                     </div>
-                  )}
-                </div>
-              </CardContent>
+                   
+                   {/* Delete Button */}
+                   {userRole === "Professor" && (
+                     <Button
+                       variant="default"
+                       onClick={(e) => {
+                         e.stopPropagation();
+                         handleDeleteStudentClick(student);
+                       }}
+                       className="absolute top-1 right-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                     >
+                       <X className="h-3 w-3 text-gray-400" />
+                     </Button>
+                   )}
             </Card>
+               ))}
           </div>
         </div>
       </div>
+
+                 {/* Action Buttons */}
+         <div className="flex justify-between mt-6">
+           <Button 
+             onClick={() => window.location.href = '/grupos'}
+             variant="default"
+             className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 h-auto"
+           >
+             Ver Turmas Existentes
+           </Button>
+                       <Button 
+              onClick={handleCreateTurma}
+              className="bg-red-500 hover:bg-red-600 text-white px-6 py-3 h-auto"
+              disabled={selectedStudents.size === 0}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Criar turma ({selectedStudents.size} alunos)
+            </Button>
+         </div>
+       </div>
+
+       {/* Confirmation Dialog */}
+       <ConfirmationDialog
+         isOpen={showDeleteDialog}
+         onClose={() => setShowDeleteDialog(false)}
+         onConfirm={confirmDeleteStudent}
+         title="Remover Aluno"
+         message={`Tem certeza que deseja remover o aluno "${studentToDelete?.name}" da turma? Esta ação não pode ser desfeita.`}
+         confirmText="Remover"
+         cancelText="Cancelar"
+         type="danger"
+       />
     </ProtectedRoute>
-  );
+   )
 }

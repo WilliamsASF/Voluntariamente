@@ -21,8 +21,8 @@ export const CardHeader = ({ children }: { children: React.ReactNode }) => (
   <header className="p-4 bg-gray-100 rounded-t-xl">{children}</header>
 );
 
-export const CardContent = ({ children }: { children: React.ReactNode }) => (
-  <main className="p-4">{children}</main>
+export const CardContent = ({ children, className }: { children: React.ReactNode; className?: string }) => (
+  <main className={clsx('p-4', className)}>{children}</main>
 );
 
 export default Card;

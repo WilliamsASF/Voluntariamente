@@ -1,311 +1,255 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import ProtectedRoute from '../../components/ProtectedRoute';
 import { useAuth } from '../../hooks/useAuth';
-import { EstudanteService } from '../../lib/services/estudantes';
-import { ProjetoService } from '../../lib/services/projetos';
-import { Estudante, Projeto } from '../../lib/types';
-
-type Etapa = {
-  id: number;
-  nome: string;
-  descricao: string;
-};
-
-type AlunoSelecionado = {
-  id: number;
-  nome: string;
-  email: string;
-  selecionado: boolean;
-};
+import ProtectedRoute from '../../components/ProtectedRoute';
+import Button from '../../components/ui/button';
+import Card from '../../components/ui/card';
+import { Plus, Users, BookOpen, Calendar, TrendingUp } from 'lucide-react';
+import Link from 'next/link';
+import { Turma } from '../../lib/types';
 
 export default function PaginaInicial() {
-  const { user, logout } = useAuth();
-  const [nomeTurma, setNomeTurma] = useState('');
-  const [etapas, setEtapas] = useState<Etapa[]>([]);
-  const [alunos, setAlunos] = useState<AlunoSelecionado[]>([]);
-  const [buscaAluno, setBuscaAluno] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-  const [projetos, setProjetos] = useState<Projeto[]>([]);
+  const { user } = useAuth();
+  const [turmas, setTurmas] = useState<Turma[]>([]);
+  const [stats, setStats] = useState({
+    totalTurmas: 0,
+    totalStudents: 0,
+    totalStages: 0,
+    totalGroups: 0
+  });
 
-  // Carregar dados iniciais
   useEffect(() => {
-    const loadInitialData = async () => {
-      try {
-        setIsLoading(true);
-        
-        // Carregar estudantes
-        const estudantesResult = await EstudanteService.getAllEstudantes();
-        if (estudantesResult.success && estudantesResult.data) {
-          const alunosFormatados: AlunoSelecionado[] = estudantesResult.data.map(est => ({
-            id: est.student_id,
-            nome: est.full_name,
-            email: `${est.full_name.toLowerCase().replace(/\s+/g, '.')}@estudante.ufpe.br`,
-            selecionado: false
-          }));
-          setAlunos(alunosFormatados);
-        }
-
-        // Carregar projetos
-        const projetosResult = await ProjetoService.getAllProjetos();
-        if (projetosResult.success && projetosResult.data) {
-          setProjetos(projetosResult.data);
-        }
-      } catch (error) {
-        console.error('Erro ao carregar dados:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadInitialData();
-  }, []);
-
-  const adicionarEtapa = () => {
-    const novaEtapa: Etapa = {
-      id: Date.now(),
-      nome: '',
-      descricao: ''
-    };
-    setEtapas([...etapas, novaEtapa]);
-  };
-
-  const atualizarEtapa = (id: number, campo: keyof Etapa, valor: string) => {
-    setEtapas(etapas.map(etapa => 
-      etapa.id === id ? { ...etapa, [campo]: valor } : etapa
-    ));
-  };
-
-  const removerEtapa = (id: number) => {
-    setEtapas(etapas.filter(etapa => etapa.id !== id));
-  };
-
-  const toggleAluno = (id: number) => {
-    const novosAlunos = alunos.map(aluno =>
-      aluno.id === id ? { ...aluno, selecionado: !aluno.selecionado } : aluno
-    );
-    setAlunos(novosAlunos);
-  };
-
-  const alunosFiltrados = alunos.filter(aluno =>
-    aluno.nome.toLowerCase().includes(buscaAluno.toLowerCase()) ||
-    aluno.email.toLowerCase().includes(buscaAluno.toLowerCase())
-  );
-
-  const alunosSelecionados = alunos.filter(aluno => aluno.selecionado).length;
-  const podeCriarTurma = nomeTurma.trim() !== '' && alunosSelecionados > 0;
-
-  const criarTurma = () => {
-    if (podeCriarTurma) {
-      const dadosTurma = {
-        nome: nomeTurma,
-        etapas: etapas.filter(etapa => etapa.nome.trim() !== ''),
-        alunos: alunos.filter(aluno => aluno.selecionado)
-      };
-      console.log('Criando turma:', dadosTurma);
-      alert('Turma criada com sucesso!');
+    const savedTurmas = localStorage.getItem('turmas');
+    if (savedTurmas) {
+      const allTurmas = JSON.parse(savedTurmas);
       
-      // Limpar formulário após criação
-      setNomeTurma('');
-      setEtapas([]);
-      setAlunos(alunos.map(aluno => ({ ...aluno, selecionado: false })));
-    }
-  };
+      if (user?.role === 'aluno') {
+        // Filter turmas for aluno (only show enrolled ones)
+        const enrolledTurmas = allTurmas.filter((turma: Turma) => 
+          turma.students.some(student => student.email === user.email)
+        );
+        setTurmas(enrolledTurmas);
+      } else {
+        // Professor sees all turmas
+        setTurmas(allTurmas);
+      }
 
-  if (isLoading) {
+      // Calculate stats
+      const totalStudents = allTurmas.reduce((acc: number, turma: Turma) => acc + turma.students.length, 0);
+      const totalStages = allTurmas.reduce((acc: number, turma: Turma) => acc + turma.stages.length, 0);
+      const totalGroups = allTurmas.reduce((acc: number, turma: Turma) => acc + (turma.groups?.length || 0), 0);
+      
+      setStats({
+        totalTurmas: allTurmas.length,
+        totalStudents,
+        totalStages,
+        totalGroups
+      });
+    }
+  }, [user]);
+
+  if (user?.role === 'aluno') {
     return (
       <ProtectedRoute>
-        <div className="flex items-center justify-center h-screen">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Carregando dados...</p>
+        <div className="p-6">
+          <div className="mb-8">
+            <h1 className="text-2xl font-semibold text-gray-900 mb-2">
+              Bem-vindo, {user.name || user.username}!
+            </h1>
+            <p className="text-gray-600">Acompanhe suas turmas e atividades</p>
+          </div>
+
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <Card className="p-6 bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-blue-100">Minhas Turmas</p>
+                  <p className="text-2xl font-bold">{turmas.length}</p>
+                </div>
+                <BookOpen size={24} className="text-blue-200" />
+              </div>
+            </Card>
+
+            <Card className="p-6 bg-gradient-to-r from-green-500 to-green-600 text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-green-100">Total de Etapas</p>
+                  <p className="text-2xl font-bold">
+                    {turmas.reduce((acc, turma) => acc + turma.stages.length, 0)}
+                  </p>
+                </div>
+                <TrendingUp size={24} className="text-green-200" />
+              </div>
+            </Card>
+
+            <Card className="p-6 bg-gradient-to-r from-purple-500 to-purple-600 text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-purple-100">Próximas Atividades</p>
+                  <p className="text-2xl font-bold">0</p>
+                </div>
+                <Calendar size={24} className="text-purple-200" />
+              </div>
+            </Card>
+          </div>
+
+          {/* My Turmas */}
+          <div className="mb-8">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Minhas Turmas</h2>
+            {turmas.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {turmas.map((turma) => (
+                  <Card key={turma.id} className="p-6 hover:shadow-lg transition-shadow">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-gray-900">{turma.title}</h3>
+                      <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                        {turma.stages.length} etapas
+                      </span>
+                    </div>
+                    <p className="text-gray-600 text-sm mb-4">{turma.subtitle || 'Sem descrição'}</p>
+                    <div className="flex items-center justify-between text-sm text-gray-500">
+                      <span>Professor: {turma.instructor}</span>
+                      <span>{turma.students.length} alunos • {turma.groups?.length || 0} grupos</span>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 bg-gray-50 rounded-lg">
+                <BookOpen size={48} className="mx-auto text-gray-400 mb-4" />
+                <p className="text-gray-500 mb-4">Você ainda não está inscrito em nenhuma turma</p>
+                <p className="text-sm text-gray-400">Entre em contato com seu professor para ser adicionado</p>
+              </div>
+            )}
           </div>
         </div>
       </ProtectedRoute>
     );
   }
 
+  // Professor Dashboard
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-gray-50">
-        {/* Header */}
-        <header className="bg-white shadow-sm border-b">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center py-4">
-              <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-              <div className="flex items-center space-x-4">
-                <span className="text-gray-600">
-                  Olá, {user?.username || 'Usuário'}
-                </span>
-                <button
-                  onClick={logout}
-                  className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors"
-                >
-                  Sair
-                </button>
+      <div className="p-6">
+        <div className="mb-8">
+          <h1 className="text-2xl font-semibold text-gray-900 mb-2">
+            Dashboard do Professor
+          </h1>
+          <p className="text-gray-600">Gerencie suas turmas e acompanhe o progresso dos alunos</p>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <Card className="p-6 bg-gradient-to-r from-red-500 to-red-600 text-white">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-red-100">Total de Turmas</p>
+                <p className="text-2xl font-bold">{stats.totalTurmas}</p>
               </div>
+              <BookOpen size={24} className="text-red-200" />
             </div>
+          </Card>
+
+          <Card className="p-6 bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-blue-100">Total de Alunos</p>
+                <p className="text-2xl font-bold">{stats.totalStudents}</p>
+              </div>
+              <Users size={24} className="text-blue-200" />
+            </div>
+          </Card>
+
+          <Card className="p-6 bg-gradient-to-r from-green-500 to-green-600 text-white">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-green-100">Total de Etapas</p>
+                <p className="text-2xl font-bold">{stats.totalStages}</p>
+              </div>
+              <TrendingUp size={24} className="text-green-200" />
+            </div>
+          </Card>
+
+          <Card className="p-6 bg-gradient-to-r from-purple-500 to-purple-600 text-white">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-purple-100">Total de Grupos</p>
+                <p className="text-2xl font-bold">{stats.totalGroups}</p>
+              </div>
+              <Users size={24} className="text-purple-200" />
+            </div>
+          </Card>
+
+          <Card className="p-6 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-indigo-100">Turmas Ativas</p>
+                <p className="text-2xl font-bold">{turmas.length}</p>
+              </div>
+              <Calendar size={24} className="text-indigo-200" />
+            </div>
+          </Card>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Ações Rápidas</h2>
+          <div className="flex flex-wrap gap-4">
+            <Link href="/nova-turma">
+              <Button variant="primary" className="flex items-center gap-2">
+                <Plus size={18} />
+                Nova Turma
+              </Button>
+            </Link>
+            <Link href="/alunos">
+              <Button variant="default" className="flex items-center gap-2">
+                <Users size={18} />
+                Gerenciar Alunos
+              </Button>
+            </Link>
+            <Link href="/grupos">
+              <Button variant="default" className="flex items-center gap-2">
+                <BookOpen size={18} />
+                Ver Todas as Turmas
+              </Button>
+            </Link>
           </div>
-        </header>
+        </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="space-y-6">
-            {/* Estatísticas */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-white p-6 rounded-lg shadow-sm border">
-                <h3 className="text-lg font-medium text-gray-900">Total de Alunos</h3>
-                <p className="text-3xl font-bold text-red-600">{alunos.length}</p>
-              </div>
-              <div className="bg-white p-6 rounded-lg shadow-sm border">
-                <h3 className="text-lg font-medium text-gray-900">Projetos Ativos</h3>
-                <p className="text-3xl font-bold text-blue-600">{projetos.length}</p>
-              </div>
-              <div className="bg-white p-6 rounded-lg shadow-sm border">
-                <h3 className="text-lg font-medium text-gray-900">Turmas Criadas</h3>
-                <p className="text-3xl font-bold text-green-600">0</p>
-              </div>
+        {/* Recent Turmas */}
+        <div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Turmas Recentes</h2>
+          {turmas.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {turmas.slice(0, 6).map((turma) => (
+                <Card key={turma.id} className="p-6 hover:shadow-lg transition-shadow">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">{turma.title}</h3>
+                    <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                      {turma.students.length} alunos
+                    </span>
+                  </div>
+                  <p className="text-gray-600 text-sm mb-4">{turma.subtitle || 'Sem descrição'}</p>
+                  <div className="flex items-center justify-between text-sm text-gray-500">
+                    <span>{turma.stages.length} etapas</span>
+                    <Link href={`/grupos/${turma.id}`} className="text-red-600 hover:text-red-700">
+                      Ver detalhes →
+                    </Link>
+                  </div>
+                </Card>
+              ))}
             </div>
-
-            {/* Título */}
-            <div className="border-b border-gray-200 pb-4">
-              <h2 className="text-3xl font-bold text-gray-800">Nova turma</h2>
-              <p className="text-gray-600 mt-2">Crie uma nova turma para gerenciar projetos e alunos</p>
+          ) : (
+            <div className="text-center py-12 bg-gray-50 rounded-lg">
+              <BookOpen size={48} className="mx-auto text-gray-400 mb-4" />
+              <p className="text-gray-500 mb-4">Nenhuma turma criada ainda</p>
+              <Link href="/nova-turma">
+                <Button variant="primary">Criar primeira turma</Button>
+              </Link>
             </div>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Coluna Esquerda - Dados da Turma */}
-              <div className="space-y-6">
-                {/* Nome da Turma */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Nome da turma
-                  </label>
-                  <input
-                    type="text"
-                    value={nomeTurma}
-                    onChange={(e) => setNomeTurma(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                    placeholder="Digite o nome da turma"
-                  />
-                </div>
-
-                {/* Etapas */}
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Etapas do projeto
-                    </label>
-                    <button
-                      onClick={adicionarEtapa}
-                      className="bg-red-600 text-white px-3 py-1 rounded-md hover:bg-red-700 transition-colors text-sm"
-                    >
-                      + Adicionar
-                    </button>
-                  </div>
-                  
-                  <div className="space-y-3">
-                    {etapas.map((etapa) => (
-                      <div key={etapa.id} className="flex space-x-2">
-                        <input
-                          type="text"
-                          value={etapa.nome}
-                          onChange={(e) => atualizarEtapa(etapa.id, 'nome', e.target.value)}
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                          placeholder="Nome da etapa"
-                        />
-                        <input
-                          type="text"
-                          value={etapa.descricao}
-                          onChange={(e) => atualizarEtapa(etapa.id, 'descricao', e.target.value)}
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                          placeholder="Descrição"
-                        />
-                        <button
-                          onClick={() => removerEtapa(etapa.id)}
-                          className="bg-red-100 text-red-600 px-3 py-2 rounded-md hover:bg-red-200 transition-colors"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Botão Criar Turma */}
-                <button
-                  onClick={criarTurma}
-                  disabled={!podeCriarTurma}
-                  className={`w-full py-3 px-4 rounded-md font-medium transition-colors ${
-                    podeCriarTurma
-                      ? 'bg-red-600 text-white hover:bg-red-700'
-                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  }`}
-                >
-                  Criar Turma
-                </button>
-              </div>
-
-              {/* Coluna Direita - Seleção de Alunos */}
-              <div className="space-y-6">
-                {/* Busca de Alunos */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Buscar alunos
-                  </label>
-                  <input
-                    type="text"
-                    value={buscaAluno}
-                    onChange={(e) => setBuscaAluno(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                    placeholder="Digite o nome ou email do aluno"
-                  />
-                </div>
-
-                {/* Lista de Alunos */}
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Alunos disponíveis ({alunosSelecionados} selecionados)
-                    </label>
-                  </div>
-                  
-                  <div className="max-h-96 overflow-y-auto border border-gray-200 rounded-md">
-                    {alunosFiltrados.length > 0 ? (
-                      alunosFiltrados.map((aluno) => (
-                        <div
-                          key={aluno.id}
-                          className={`flex items-center p-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${
-                            aluno.selecionado ? 'bg-red-50 border-red-200' : ''
-                          }`}
-                          onClick={() => toggleAluno(aluno.id)}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={aluno.selecionado}
-                            onChange={() => toggleAluno(aluno.id)}
-                            className="mr-3 h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
-                          />
-                          <div className="flex-1">
-                            <p className={`font-medium ${aluno.selecionado ? 'text-red-800' : 'text-gray-900'}`}>
-                              {aluno.nome}
-                            </p>
-                            <p className={`text-sm ${aluno.selecionado ? 'text-red-600' : 'text-gray-500'}`}>
-                              {aluno.email}
-                            </p>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="p-4 text-center text-gray-500">
-                        Nenhum aluno encontrado
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </ProtectedRoute>

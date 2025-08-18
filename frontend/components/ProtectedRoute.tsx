@@ -6,23 +6,27 @@ import { useAuth } from '../hooks/useAuth';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredRole?: string;
+  requiredRole?: 'aluno' | 'professor';
 }
 
 export default function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       router.push('/');
+      return;
     }
-  }, [isAuthenticated, isLoading, router]);
 
-  useEffect(() => {
     if (!isLoading && isAuthenticated && requiredRole && user?.role !== requiredRole) {
-      // Usuário não tem a role necessária
-      router.push('/pagina_inicial');
+      // Redirect to appropriate page based on user role
+      if (user?.role === 'aluno') {
+        router.push('/pagina_inicial');
+      } else if (user?.role === 'professor') {
+        router.push('/pagina_inicial');
+      }
+      return;
     }
   }, [isAuthenticated, isLoading, user, requiredRole, router]);
 
@@ -38,11 +42,11 @@ export default function ProtectedRoute({ children, requiredRole }: ProtectedRout
   }
 
   if (!isAuthenticated) {
-    return null; // Será redirecionado pelo useEffect
+    return null; // Will redirect to login
   }
 
   if (requiredRole && user?.role !== requiredRole) {
-    return null; // Será redirecionado pelo useEffect
+    return null; // Will redirect to appropriate page
   }
 
   return <>{children}</>;
