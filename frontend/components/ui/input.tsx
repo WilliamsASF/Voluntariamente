@@ -10,6 +10,7 @@ type InputProps = {
   onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
   required?: boolean;
   disabled?: boolean;
+  className?: string;        // <-- adicionado para permitir classes externas
 };
 
 export default function Input({
@@ -22,6 +23,7 @@ export default function Input({
   onChange,
   required,
   disabled,
+  className,                 // <-- recebe a classe externa
 }: InputProps) {
   return (
     <div className="flex flex-col space-y-1">
@@ -40,7 +42,7 @@ export default function Input({
         onChange={onChange}
         required={required}
         disabled={disabled}
-        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500"
+        className={`w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 ${className || ""}`}
       />
     </div>
   );
